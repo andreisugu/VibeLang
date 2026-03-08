@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+.vibelang-title {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 48px;
+  font-weight: bold;
+  text-transform: uppercase;
+  
+  /* The Gradient Color */
+  background: linear-gradient(to bottom, #FF9500, #FF5E00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+
+  /* The "Very Cool" Glow Effect */
+  filter: drop-shadow(0 0 8px rgba(255, 94, 0, 0.4));
+}
