@@ -1,7 +1,7 @@
 
 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
   <img src="assets/icons/vibelang_transparent_1024.png" alt="VibeLang" width="50" height="50">
-  <span style="font-family: 'Fredoka One', sans-serif; font-size: 48px; font-weight: bold; text-transform: uppercase; background: linear-gradient(to bottom, #FF9500, #FF5E00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; filter: drop-shadow(0 0 8px rgba(255, 94, 0, 0.4));">VibeLang</span>
+  <img src="assets/title.png" alt="VibeLang Title" height="46">
 </div>
 
 ## 📝 Description
