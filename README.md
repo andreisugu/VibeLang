@@ -1,6 +1,9 @@
 
 
-# VibeLang 📱🗣️
+<div align="center">
+  <img src="assets/icons/vibelang_transparent_1024.png" alt="VibeLang Logo" width="80" style="margin-right: 15px;">
+  <h1 style="display: inline;">VibeLang 📱🗣️</h1>
+</div>
 
 ## 📝 Description
 
