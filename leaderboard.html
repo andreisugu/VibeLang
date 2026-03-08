@@ -1,3 +1,4 @@
+<!-- Leaderboard page - displays user rankings by XP points -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,15 +22,44 @@
     <a class="nav-link ms-2" href="profile.html">Profile</a>
 </nav>
 <main class="container my-4">
+    <!-- table-sm: compact table with reduced padding -->
     <table class="table table-sm">
+        <!-- Header row -->
         <thead>
-            <tr><th>Rank</th><th>User Name</th><th>Language</th><th>XP Points</th></tr>
+            <tr>
+                <th>Rank</th>
+                <th>User Name</th>
+                <th>Language</th>
+                <th>XP Points</th>
+            </tr>
         </thead>
+        <!-- Data rows -->
         <tbody>
-            <tr class="table-active"><td>1</td><td>Sugubete Andrei</td><td>Spanish</td><td>2450</td></tr>
-            <tr><td>2</td><td>Maria Pop</td><td>English</td><td>2100</td></tr>
-            <tr><td>3</td><td>Ion Ionescu</td><td>German</td><td>1800</td></tr>
-            <tr><td>4</td><td>Elena Radu</td><td>Spanish</td><td>1500</td></tr>
+            <!-- table-active: highlights current user's row -->
+            <tr class="table-active">
+                <td>1</td>
+                <td>Sugubete Andrei</td>
+                <td>Spanish</td>
+                <td>2450</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Maria Pop</td>
+                <td>English</td>
+                <td>2100</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Ion Ionescu</td>
+                <td>German</td>
+                <td>1800</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Elena Radu</td>
+                <td>Spanish</td>
+                <td>1500</td>
+            </tr>
         </tbody>
     </table>
 </main>

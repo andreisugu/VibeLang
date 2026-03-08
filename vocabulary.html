@@ -1,3 +1,4 @@
+<!-- Vocabulary page - shows list of learned and new vocabulary words -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,10 +23,21 @@
 </nav>
 <main class="container my-4">
     <h1 class="h4">Vocabulary</h1>
+    <!-- form-select: dropdown field, w-auto: auto width -->
     <select class="form-select w-auto mb-3"><option>Filter by language</option></select>
+    <!-- list-group: Bootstrap styled list -->
     <ul class="list-group">
-        <li class="list-group-item d-flex justify-content-between align-items-center">Slay <span class="badge bg-success">Learned</span></li>
-        <li class="list-group-item d-flex justify-content-between align-items-center">Ghosting <span class="badge bg-secondary">New</span></li>
+        <!-- d-flex: horizontal layout, justify-content-between: space items apart, align-items-center: vertical center -->
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            Slay
+            <!-- bg-success: green background badge -->
+            <span class="badge bg-success">Learned</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            Ghosting
+            <!-- bg-secondary: gray background badge -->
+            <span class="badge bg-secondary">New</span>
+        </li>
     </ul>
 </main>
 <footer class="bg-light text-center py-2 mt-auto">

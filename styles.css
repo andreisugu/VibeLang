@@ -1,11 +1,14 @@
+/* Custom fonts and branding styles */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
 
+/* d-flex: flexbox, align-items-center: vertical center, gap: spacing between elements */
 .navbar-brand {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
+/* Fixed size container for logo, prevents stretching/shrinking */
 .navbar-logo {
   height: 28px;
   width: 28px;
@@ -15,6 +18,7 @@
   flex-shrink: 0;
 }
 
+/* Gradient colored text with glowing effect */
 .vibelang-title {
   font-family: 'Fredoka One', sans-serif;
   font-size: 28px;
@@ -22,13 +26,12 @@
   text-transform: uppercase;
   margin: 0;
   line-height: 1;
-  
-  /* The Gradient Color */
+  /* Orange gradient background */
   background: linear-gradient(to bottom, #FF9500, #FF5E00);
+  /* Clip gradient to text shape */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-
-  /* The "Very Cool" Glow Effect */
+  /* Add glow shadow effect */
   filter: drop-shadow(0 0 8px rgba(255, 94, 0, 0.4));
 }
