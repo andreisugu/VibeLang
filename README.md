@@ -1,21 +1,18 @@
 
 
-# LinguaStep
-
-> Language Learning Platform (PAW Project)  
-> Student: Sugubete Andrei
+# VibeLang
 
 ## Description
-LinguaStep is a web application for language learning, built on micro-learning and gamification principles. In the current phase, the project is 100% static (HTML5, CSS3, Bootstrap, minimal JS), with a shared layout and unified navigation, ready for future .NET/ASP.NET Core expansion.
+VibeLang is a web application for language learning, built on micro-learning and gamification principles. In the current phase, the project is 100% static (HTML5, CSS3, Bootstrap, minimal JS), with a shared layout and unified navigation, ready for future .NET/ASP.NET Core expansion.
 
 ## Page Structure
-- **Dashboard** (dashboard.html): progress, XP, "Continue last lesson" button
-- **Courses** (cursuri.html): grid of language cards, "Start" and "Vocabulary" buttons
-- **Lesson** (lectie.html): word, translation, "Repeat" and "Learned" buttons, quiz link
+- **Dashboard** (index.html): progress, XP, "Continue last lesson" button
+- **Courses** (courses.html): grid of language cards, "Start" and "Vocabulary" buttons
+- **Lesson** (lesson.html): word, translation, "Repeat" and "Learned" buttons, quiz link
 - **Quiz** (quiz.html): question, answer options, check button
-- **Leaderboard** (clasament.html): XP top table, highlighted user row
-- **Vocabulary** (vocabular.html): word list, "Learned/New" badge, filter
-- **Profile** (profil.html): avatar, user data, edit form
+- **Leaderboard** (leaderboard.html): XP top table, highlighted user row
+- **Vocabulary** (vocabulary.html): word list, "Learned/New" badge, filter
+- **Profile** (profile.html): avatar, user data, edit form
 
 ## Technologies
 - HTML5, Bootstrap 5, CSS3
