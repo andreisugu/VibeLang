@@ -8,7 +8,11 @@
 
 .navbar-logo {
   height: 28px;
+  max-height: 28px;
+  max-width: 100%;
   width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .vibelang-title {
