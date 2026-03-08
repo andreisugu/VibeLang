@@ -8,9 +8,9 @@
 
 .navbar-logo {
   height: 28px;
+  width: 28px;
   max-height: 28px;
-  max-width: 100%;
-  width: auto;
+  max-width: 28px;
   object-fit: contain;
   flex-shrink: 0;
 }
