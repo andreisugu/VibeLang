@@ -1,10 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
 
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-logo {
+  height: 40px;
+  width: auto;
+}
+
 .vibelang-title {
   font-family: 'Fredoka One', sans-serif;
-  font-size: 48px;
+  font-size: 28px;
   font-weight: bold;
   text-transform: uppercase;
+  margin: 0;
+  line-height: 1;
   
   /* The Gradient Color */
   background: linear-gradient(to bottom, #FF9500, #FF5E00);
