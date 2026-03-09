@@ -32,9 +32,12 @@ jobs:
         run: |
           # Update font cache
           fc-cache -f -v
+          # Clean any previous build artifacts
+          rm -f *.aux *.log *.out *.auxlock *.toc 2>/dev/null || true
           # Compile with XeLaTeX (required for fontspec and non-Latin fonts)
-          xelatex -interaction=nonstopmode -file-line-error -shell-escape docSpecs.tex || true
-          xelatex -interaction=nonstopmode -file-line-error -shell-escape docSpecs.tex || true
+          # Note: Don't use shell-escape to prevent Babel from writing debug info
+          xelatex -halt-on-error -interaction=batchmode docSpecs.tex
+          xelatex -halt-on-error -interaction=batchmode docSpecs.tex
 
       - name: Check if PDF was generated
         run: |
