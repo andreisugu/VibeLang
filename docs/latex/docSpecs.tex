@@ -4,10 +4,8 @@
 \usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2cm, right=2cm]{geometry}
 \usepackage{fontspec}
 
-\usepackage[romanian, bidi=basic, provide=*]{babel}
-
-\babelprovide[import, onchar=ids fonts]{romanian}
-\babelprovide[import, onchar=ids fonts]{english}
+% Use XeTeX-compatible babel configuration
+\usepackage[romanian, english]{babel}
 
 % Set default/Latin font to Sans Serif in the main (rm) slot
 \babelfont{rm}{Noto Sans}

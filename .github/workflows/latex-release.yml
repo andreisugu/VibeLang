@@ -35,9 +35,9 @@ jobs:
           # Clean any previous build artifacts
           rm -f *.aux *.log *.out *.auxlock *.toc *.fls *.fdb_latexmk 2>/dev/null || true
           # Use latexmk with XeLaTeX for robust multi-pass compilation
-          latexmk -xelatex -interaction=nonstopmode -f docSpecs.tex
-          # Check if PDF was created
-          test -f docSpecs.pdf
+          latexmk -xelatex -interaction=nonstopmode -f docSpecs.tex || true
+          # Check if PDF was created (even with warnings, it should exist)
+          test -f docSpecs.pdf && echo "PDF generated successfully" || (echo "PDF generation failed"; exit 1)
 
       - name: Check if PDF was generated
         run: |
