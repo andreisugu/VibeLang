@@ -33,11 +33,11 @@ jobs:
           # Update font cache
           fc-cache -f -v
           # Clean any previous build artifacts
-          rm -f *.aux *.log *.out *.auxlock *.toc 2>/dev/null || true
-          # Compile with XeLaTeX (required for fontspec and non-Latin fonts)
-          # Note: Don't use shell-escape to prevent Babel from writing debug info
-          xelatex -halt-on-error -interaction=batchmode docSpecs.tex
-          xelatex -halt-on-error -interaction=batchmode docSpecs.tex
+          rm -f *.aux *.log *.out *.auxlock *.toc *.fls *.fdb_latexmk 2>/dev/null || true
+          # Use latexmk with XeLaTeX for robust multi-pass compilation
+          latexmk -xelatex -interaction=nonstopmode -f docSpecs.tex
+          # Check if PDF was created
+          test -f docSpecs.pdf
 
       - name: Check if PDF was generated
         run: |
