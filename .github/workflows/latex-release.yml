@@ -1,0 +1,87 @@
+name: LaTeX Documentation Auto-Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/latex/docSpecs.tex'
+      - '.github/workflows/latex-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install LaTeX dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-xetex latexmk
+
+      - name: Compile LaTeX to PDF
+        working-directory: docs/latex
+        run: |
+          xelatex -interaction=nonstopmode -file-line-error docSpecs.tex
+          xelatex -interaction=nonstopmode -file-line-error docSpecs.tex
+
+      - name: Check if PDF was generated
+        run: |
+          if [ -f "docs/latex/docSpecs.pdf" ]; then
+            echo "PDF generated successfully"
+            ls -lh docs/latex/docSpecs.pdf
+          else
+            echo "PDF generation failed"
+            exit 1
+          fi
+
+      - name: Get version from LaTeX document
+        id: version
+        run: |
+          VERSION=$(grep -oP 'Versiune Document:.*\K[0-9]+\.[0-9]+\.[0-9]+' docs/latex/docSpecs.tex | head -1)
+          if [ -z "$VERSION" ]; then
+            VERSION="1.0.0"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version detected: $VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: docs-v${{ steps.version.outputs.version }}-${{ github.run_number }}
+          name: LaTeX Documentation Release - v${{ steps.version.outputs.version }}
+          body: |
+            # VibeLang LaTeX Documentation Release
+            
+            **Version:** ${{ steps.version.outputs.version }}
+            **Date:** ${{ github.event.head_commit.timestamp }}
+            **Commit:** ${{ github.sha }}
+            
+            ## Changes
+            - Auto-compiled documentation from `docs/latex/docSpecs.tex`
+            
+            ### Download
+            - **docSpecs.pdf** - Complete technical specifications document
+            
+            [View on GitHub](https://github.com/${{ github.repository }})
+          files: |
+            docs/latex/docSpecs.pdf
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload PDF to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: docSpecs-pdf
+          path: docs/latex/docSpecs.pdf
+          retention-days: 30

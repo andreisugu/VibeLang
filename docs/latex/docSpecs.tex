@@ -1,0 +1,128 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- UNIVERSAL PREAMBLE BLOCK ---
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2cm, right=2cm]{geometry}
+\usepackage{fontspec}
+
+\usepackage[romanian, bidi=basic, provide=*]{babel}
+
+\babelprovide[import, onchar=ids fonts]{romanian}
+\babelprovide[import, onchar=ids fonts]{english}
+
+% Set default/Latin font to Sans Serif in the main (rm) slot
+\babelfont{rm}{Noto Sans}
+
+% Add because main language is not English
+\usepackage{enumitem}
+\setlist[itemize]{label=-}
+
+\usepackage{hyperref}
+% --- END PREAMBLE ---
+
+\begin{document}
+
+\begin{center}
+    \LARGE\textbf{DOCUMENT DE SPECIFICAȚII TEHNICE ȘI ARHITECTURĂ FRONT-END}
+\end{center}
+
+\vspace{0.5cm}
+
+\noindent
+\textbf{Proiect:} Aplicație Web E-Learning „VibeLang” \\
+\textbf{Versiune Document:} 1.0.0 \\
+\textbf{Status:} Revizuire tehnică inițială (Front-End)
+
+\vspace{0.8cm}
+
+\section{PREZENTARE GENERALĂ A PROIECTULUI}
+\textbf{VibeLang} este o aplicație web interactivă de tip e-learning, arhitecturată vizual după modelul unei \textit{Single-Page Application} (implementată curent prin fișiere statice interconectate). Proiectul integrează elemente de gamificare (puncte XP, ranking) și este dezvoltat conform standardelor web moderne pentru a asigura o experiență de utilizare fluidă și intuitivă.
+
+\section{STIVA TEHNOLOGICĂ (TECH STACK)}
+Ecosistemul front-end a fost dezvoltat utilizând următoarele tehnologii și standarde:
+
+\begin{itemize}
+    \item \textbf{Markup Semantic (HTML5):} Utilizarea extensivă a tag-urilor structurale (\texttt{<nav>}, \texttt{<main>}, \texttt{<footer>}, \texttt{<section>}) pentru a defini o ierarhie precisă a DOM-ului, optimizând atât indexarea (SEO), cât și accesibilitatea (a11y).
+    \item \textbf{Stilizare și UI Framework (CSS3 \& Bootstrap 5.3.2):} Integrarea framework-ului Bootstrap (via CDN) pentru a valorifica sistemul de grid avansat și arhitectura de tip \textit{utility-first}.
+    \item \textbf{Custom Styling (\texttt{styles.css}):} Implementarea de reguli CSS personalizate pentru branding (ex. utilizarea \texttt{-webkit-background-clip: text} și \texttt{linear-gradient} pentru efecte tipografice avansate, \texttt{filter: drop-shadow} pentru adâncime vizuală).
+    \item \textbf{Tipografie Web:} Integrarea fontului extern „Fredoka One” prin intermediul Google Fonts API pentru o identitate vizuală distinctă.
+\end{itemize}
+
+\section{ARHITECTURA LAYOUT-ULUI ȘI DESIGN RESPONSIV}
+Proiectul adoptă paradigma \textbf{Mobile-First}, asigurând o scalare fluidă a componentelor UI de la rezoluții mobile către desktop. Toate cele 7 module ale aplicației moștenesc un șablon arhitectural comun (\textit{Master Layout}).
+
+\subsection{Structura Master Layout-ului}
+\begin{itemize}
+    \item \textbf{Containerul Principal (\texttt{<body>}):} Folosește flexbox la nivel de rădăcină (\texttt{d-flex flex-column min-vh-100}) pentru a garanta comportamentul de tip \textit{Sticky Footer} (footer-ul este forțat la baza viewport-ului, indiferent de lungimea conținutului, prin utilitarul \texttt{mt-auto}).
+    \item \textbf{Bara de Navigare (Navbar):} Componentă flexibilă ce conține branding-ul (logo fluid și text) și legăturile de navigare. Găzduiește componenta de stare a sesiunii, afișând datele utilizatorului autentificat (ex. \textit{Sugubete Andrei | sugubete.andrei@email.com}), poziționate spațial prin clase utilitare (\texttt{ms-auto}).
+    \item \textbf{Aria de Conținut (\texttt{<main>}):} Încapsulată într-un \texttt{<main class="container my-4">} pentru centrarea și limitarea extinderii conținutului pe monitoare \textit{ultrawide}.
+\end{itemize}
+
+\subsection{Implementarea Bootstrap 5}
+Pentru eficientizarea dezvoltării, Bootstrap 5 a fost utilizat la nivel infrastructural:
+
+\begin{itemize}
+    \item \textbf{Flexbox Grid:} Utilizat pentru fracționarea layout-ului (ex. layout bi-columnar \texttt{col-4 / col-8} în modulul de profil; coloane auto-distribuite \texttt{.col} în interiorul \texttt{.row} pentru dashboard).
+    \item \textbf{Componente Modulare:}
+    \begin{itemize}
+        \item \textit{Cards (\texttt{.card}, \texttt{.shadow-sm}):} Wrap-ere vizuale principale pentru date și flashcard-uri.
+        \item \textit{List Groups (\texttt{.list-group}):} Rândarea datelor de tip dicționar și a modulelor de testare cu interacțiuni hover (\texttt{.list-group-item-action}).
+        \item \textit{Tables (\texttt{.table-sm}, \texttt{.table-active}):} Randarea clasamentului cu densitate înaltă a informației.
+    \end{itemize}
+    \item \textbf{Controale Formular:} Standardizarea input-urilor prin \texttt{.form-control} și \texttt{.form-select}, asigurând un aspect nativ și validare semantică.
+\end{itemize}
+
+\section{SPECIFICAȚII TEHNICE PER MODUL (VIEWS)}
+Sistemul este împărțit în 7 module distincte (view-uri), fiecare având o responsabilitate clară:
+
+\subsection{Modulul Dashboard (\texttt{index.html})}
+\begin{itemize}[label={}]
+    \item \textbf{Rol:} Punctul principal de intrare în aplicație (Entry Point).
+    \item \textbf{Implementare:} Expune metricile de performanță ale utilizatorului prin intermediul componentelor \textit{Card} dispuse într-un \textit{Grid} fluid, oferind un rezumat vizual imediat al progresului.
+\end{itemize}
+
+\subsection{Modulul de Selecție Cursuri (\texttt{courses.html})}
+\begin{itemize}[label={}]
+    \item \textbf{Rol:} Interfața principală pentru alegerea și inițierea modulelor lingvistice.
+    \item \textbf{Implementare:} Mapează entitățile de curs în rânduri responsive de \textit{Card}-uri. Utilizează butoane rotunjite nativ (\texttt{rounded-pill}) și ancore de tip acțiune (\texttt{btn-link}) pentru un UI curat.
+\end{itemize}
+
+\subsection{Modulul de Învățare (\texttt{lesson.html})}
+\begin{itemize}[label={}]
+    \item \textbf{Rol:} Prezentarea informației sub formă de sesiune de învățare activă (tip Flashcard).
+    \item \textbf{Implementare:} Layout rigid centrat absolut folosind constrângeri flexbox pe ambele axe (\texttt{align-items-center justify-content-center}). Restricția lățimii la \texttt{400px} asigură un \textit{cognitive load} optim pentru asimilarea vocabularului.
+\end{itemize}
+
+\subsection{Modulul de Evaluare (\texttt{quiz.html})}
+\begin{itemize}[label={}]
+    \item \textbf{Rol:} Validarea cunoștințelor acumulate.
+    \item \textbf{Implementare:} Transformă o structură standard Bootstrap \textit{List Group} într-o interfață de chestionar cu selecție unică (multiple-choice), pregătită pentru delegare de evenimente.
+\end{itemize}
+
+\subsection{Modulul de Vocabular (\texttt{vocabulary.html})}
+\begin{itemize}[label={}]
+    \item \textbf{Rol:} Gestionarea dicționarului personalizat și a progresului per termen.
+    \item \textbf{Implementare:} Integrează un filtru funcțional (UI) de tip \texttt{<select>}. Cuvintele sunt mapate tabelar folosind \textit{Flexbox}, alăturate elementelor de stare tip \textit{Badge} (\texttt{bg-success}, \texttt{bg-secondary}) pentru claritate informațională.
+\end{itemize}
+
+\subsection{Modulul Leaderboard (\texttt{leaderboard.html})}
+\begin{itemize}[label={}]
+    \item \textbf{Rol:} Componenta de gamification și interacțiune socială.
+    \item \textbf{Implementare:} Structură tabelară strictă HTML5. Rândul utilizatorului autentificat este extras din context și evidențiat prin manipularea claselor de stare (\texttt{.table-active}).
+\end{itemize}
+
+\subsection{Modulul de Profil (\texttt{profile.html})}
+\begin{itemize}[label={}]
+    \item \textbf{Rol:} Interfața tip CRUD pentru gestionarea informațiilor contului.
+    \item \textbf{Implementare:} Separare vizuală a identității (avatar definit procedural prin \texttt{.rounded-circle}) de mecanismul de actualizare a datelor (formular HTML5 validat nativ pentru adrese de e-mail).
+\end{itemize}
+
+\section{DIRECȚII DE DEZVOLTARE (ROADMAP TEHNIC)}
+Arhitectura curentă de \textit{mockup interactiv} servește ca fundație pentru următoarele etape de inginerie:
+
+\begin{enumerate}
+    \item \textbf{State Management \& DOM Manipulation:} Atașarea de \textit{Event Listeners} JavaScript pentru gestionarea interactivității locale (ex. validarea quiz-urilor, marcarea cuvintelor).
+    \item \textbf{Integrare Backend (API):} Consumul de date asincrone via standardul \texttt{Fetch API} (JSON) pentru popularea dinamică a listelor și cursurilor.
+    \item \textbf{Securitate și Autentificare:} Implementarea și stocarea securizată a token-urilor JWT (JSON Web Tokens) pentru deblocarea funcționalităților reale de Login, Register și menținerea sesiunii.
+\end{enumerate}
+
+\end{document}
