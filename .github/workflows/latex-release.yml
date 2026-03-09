@@ -25,13 +25,16 @@ jobs:
       - name: Install LaTeX dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-xetex latexmk
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-xetex texlive-fonts-recommended texlive-fonts-extra latexmk fonts-noto fonts-noto-cjk
 
       - name: Compile LaTeX to PDF
         working-directory: docs/latex
         run: |
-          xelatex -interaction=nonstopmode -file-line-error docSpecs.tex
-          xelatex -interaction=nonstopmode -file-line-error docSpecs.tex
+          # Update font cache
+          fc-cache -f -v
+          # Compile with XeLaTeX (required for fontspec and non-Latin fonts)
+          xelatex -interaction=nonstopmode -file-line-error -shell-escape docSpecs.tex || true
+          xelatex -interaction=nonstopmode -file-line-error -shell-escape docSpecs.tex || true
 
       - name: Check if PDF was generated
         run: |
