@@ -1,0 +1,35 @@
+@model VibeLang.Models.Chapter
+
+@{
+    ViewData["Title"] = "Add Chapter";
+}
+
+<h1 class="h4">Add Chapter</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div class="mb-3">
+                <label asp-for="CourseId" class="control-label">Course</label>
+                <select asp-for="CourseId" class ="form-control" asp-items="ViewBag.CourseId"></select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Title" class="control-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Order" class="control-label"></label>
+                <input asp-for="Order" class="form-control" type="number" value="1" />
+                <span asp-validation-for="Order" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <input type="submit" value="Create" class="btn btn-primary rounded-pill" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
