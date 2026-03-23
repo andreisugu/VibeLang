@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Lesson";
+}
+
+<div class="d-flex flex-column align-items-center justify-content-center" style="min-height:60vh;">
+    <!-- Vocabulary word display with action buttons -->
+    <!-- card: styled container, p-4: internal padding -->
+    <div class="card text-center shadow-sm p-4" style="max-width:400px; width: 100%;">
+        <!-- h2: large heading for word -->
+        <div class="h2">Slay</div>
+        <!-- mb-4: bottom margin for spacing -->
+        <div class="mb-4">To do something exceptionally well</div>
+        <!-- d-flex: horizontal layout, gap-2: spacing between buttons -->
+        <div class="d-flex gap-2">
+            <!-- flex-fill: equal width buttons -->
+            <button class="btn btn-secondary rounded-pill flex-fill">Repeat</button>
+            <button class="btn btn-success rounded-pill flex-fill">Learned</button>
+        </div>
+        <!-- btn-link: text link styled button -->
+        <a asp-controller="Home" asp-action="Quiz" class="btn btn-link mt-3 p-0">Start quiz</a>
+    </div>
+</div>

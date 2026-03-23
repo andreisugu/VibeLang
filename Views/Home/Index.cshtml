@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h1 class="h4">Welcome back, Andrei!</h1>
+<!-- row: grid container, col: auto-sized equal width columns, mt-4: top margin -->
+<div class="row mt-4">
+    <!-- Stats card -->
+    <div class="col">
+        <!-- card: content container, shadow-sm: subtle shadow, text-center: centered text -->
+        <div class="card text-center shadow-sm">
+            <div class="card-body">12 days</div>
+        </div>
+    </div>
+    <!-- Stats card -->
+    <div class="col">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">2450 XP</div>
+        </div>
+    </div>
+    <!-- Button to resume last lesson -->
+    <div class="col">
+        <!-- w-100: full width, rounded-pill: rounded button -->
+        <a asp-controller="Home" asp-action="Lesson" class="btn btn-primary rounded-pill w-100">Continue last lesson</a>
+    </div>
+</div>

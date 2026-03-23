@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Courses";
+}
+
+<h1 class="h4">Choose a new language</h1>
+<!-- btn-link: text link styled button -->
+<a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link p-0 mb-3">Vocabulary</a>
+<!-- 3 equal-width columns for language courses -->
+<div class="row mt-4">
+    <div class="col">
+        <!-- card with language, button, and link -->
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                English
+                <br>
+                <!-- btn-sm: small button size -->
+                <button class="btn btn-primary btn-sm rounded-pill mt-2">Start</button>
+                <br>
+                <a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link btn-sm p-0 mt-1">Vocabulary</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                Spanish
+                <br>
+                <button class="btn btn-primary btn-sm rounded-pill mt-2">Start</button>
+                <br>
+                <a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link btn-sm p-0 mt-1">Vocabulary</a>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                German
+                <br>
+                <button class="btn btn-primary btn-sm rounded-pill mt-2">Start</button>
+                <br>
+                <a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link btn-sm p-0 mt-1">Vocabulary</a>
+            </div>
+        </div>
+    </div>
+</div>
