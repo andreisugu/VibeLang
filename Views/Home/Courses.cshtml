@@ -21,7 +21,7 @@
             <div class="col-12 mb-5">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-primary text-white py-3">
-                        <h2 class="h5 mb-0">@course.Title (@course.Language?.Name)</h2>
+                        <h2 class="h5 mb-0">@course.Title</h2>
                     </div>
                     <div class="card-body bg-light">
                         @if (!course.Chapters.Any())
@@ -45,7 +45,6 @@
                                                             <span>
                                                                 <i class="bi bi-play-circle-fill text-primary me-2"></i> @lesson.Title
                                                             </span>
-                                                            <span class="badge rounded-pill bg-light text-dark border">@lesson.LessonType</span>
                                                         </a>
                                                     }
                                                     @if (!chapter.Lessons.Any())

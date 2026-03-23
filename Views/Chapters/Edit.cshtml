@@ -1,0 +1,42 @@
+@model VibeLang.Models.Chapter
+
+@{
+    ViewData["Title"] = "Edit Chapter";
+}
+
+<h1 class="h4">Edit Chapter</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="CourseId" class="form-label">Course</label>
+                <select asp-for="CourseId" class="form-select" asp-items="ViewBag.CourseId"></select>
+                <span asp-validation-for="CourseId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Order" class="form-label"></label>
+                <input asp-for="Order" class="form-control" type="number" />
+                <span asp-validation-for="Order" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <input type="submit" value="Save" class="btn btn-primary rounded-pill" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

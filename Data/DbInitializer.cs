@@ -11,27 +11,22 @@ public static class DbInitializer
         context.Database.EnsureCreated();
 
         // 1. Check for existing data
-        if (await context.Languages.AnyAsync())
+        if (await context.Courses.AnyAsync())
         {
             return; // DB has been seeded
         }
 
-        // 2. Add Language
-        var english = new Language { Name = "English", IsoCode = "en" };
-        context.Languages.Add(english);
-        await context.SaveChangesAsync();
-
-        // 3. Add Course
+        // 2. Add Course
         var englishBasics = new Course 
         { 
             Title = "English for Beginners", 
             Description = "Learn the essential phrases and grammar.",
-            LanguageId = english.Id 
+            IsoCode = "en"
         };
         context.Courses.Add(englishBasics);
         await context.SaveChangesAsync();
 
-        // 4. Add Chapter
+        // 3. Add Chapter
         var chapter1 = new Chapter 
         { 
             Title = "Chapter 1: Getting Started", 
@@ -41,11 +36,10 @@ public static class DbInitializer
         context.Chapters.Add(chapter1);
         await context.SaveChangesAsync();
 
-        // 5. Add Lesson (Based on your JSON)
+        // 4. Add Lesson
         var lesson1 = new Lesson
         {
             Title = "Lecția 1: Fraze Comune",
-            LessonType = "Vocabulary",
             Difficulty = "Ușor",
             Order = 1,
             ChapterId = chapter1.Id
@@ -53,7 +47,7 @@ public static class DbInitializer
         context.Lessons.Add(lesson1);
         await context.SaveChangesAsync();
 
-        // 6. Add Vocabulary Words
+        // 5. Add Vocabulary Words
         var words = new List<string> { "bună dimineața", "bună seara", "noapte bună", "cum ești?", "sunt bine", "mulțumesc", "cu plăcere", "scuze", "da", "nu" };
         var translations = new List<string> { "good morning", "good evening", "good night", "how are you?", "I am fine", "thank you", "you are welcome", "sorry", "yes", "no" };
 
@@ -67,12 +61,12 @@ public static class DbInitializer
             });
         }
 
-        // 7. Add Quiz
+        // 6. Add Quiz
         var quiz1 = new Quiz { Title = "Test: Fraze Comune", LessonId = lesson1.Id };
         context.Quizzes.Add(quiz1);
         await context.SaveChangesAsync();
 
-        // 8. Add Quiz Questions (Tip 1, 2, 3, 4 from your JSON)
+        // 7. Add Quiz Questions
         
         // Tip 1: RO -> EN
         context.QuizQuestions.Add(new QuizQuestion

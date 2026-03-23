@@ -5,17 +5,6 @@ namespace VibeLang.Models;
 
 /* --- CONTENT TABLES --- */
 
-public class Language
-{
-    [Key]
-    public int Id { get; set; }
-    [Required]
-    public string Name { get; set; } = string.Empty;
-    [Required]
-    public string IsoCode { get; set; } = string.Empty;
-    public ICollection<Course> Courses { get; set; } = new List<Course>();
-}
-
 public class Course
 {
     [Key]
@@ -23,9 +12,8 @@ public class Course
     [Required]
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public int LanguageId { get; set; }
-    [ForeignKey("LanguageId")]
-    public Language? Language { get; set; }
+    [Required]
+    public string IsoCode { get; set; } = string.Empty;
     public ICollection<Chapter> Chapters { get; set; } = new List<Chapter>();
 }
 
@@ -48,11 +36,11 @@ public class Lesson
     public int Id { get; set; }
     [Required]
     public string Title { get; set; } = string.Empty;
-    [Required]
-    public string LessonType { get; set; } = "Vocabulary"; // e.g., "Vocabulary", "Quiz", "Grammar"
     public string? Difficulty { get; set; } // Matches JSON "dificultate"
     public int Order { get; set; }
     
+    public string? ContentJson { get; set; } // Stores vocabulary and quiz data
+
     public int ChapterId { get; set; }
     [ForeignKey("ChapterId")]
     public Chapter? Chapter { get; set; }
@@ -81,7 +69,9 @@ public class UserVocabulary
 {
     [Key]
     public int Id { get; set; }
-    public int UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    [ForeignKey("UserId")]
+    public ApplicationUser? User { get; set; }
     public int WordId { get; set; }
     [ForeignKey("WordId")]
     public VocabularyWord? Word { get; set; }
@@ -93,7 +83,9 @@ public class UserLessonProgress
 {
     [Key]
     public int Id { get; set; }
-    public int UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    [ForeignKey("UserId")]
+    public ApplicationUser? User { get; set; }
     public int LessonId { get; set; }
     [ForeignKey("LessonId")]
     public Lesson? Lesson { get; set; }
@@ -106,7 +98,9 @@ public class UserCourseStats
 {
     [Key]
     public int Id { get; set; }
-    public int UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    [ForeignKey("UserId")]
+    public ApplicationUser? User { get; set; }
     public int CourseId { get; set; }
     [ForeignKey("CourseId")]
     public Course? Course { get; set; }

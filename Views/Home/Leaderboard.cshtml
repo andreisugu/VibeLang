@@ -1,41 +1,60 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<VibeLang.Models.ApplicationUser> UserManager
 @model IEnumerable<VibeLang.Models.UserCourseStats>
 
 @{
     ViewData["Title"] = "Leaderboard";
+    var currentUser = await UserManager.GetUserAsync(User);
 }
 
-<!-- table-sm: compact table with reduced padding -->
-<table class="table table-sm">
-    <!-- Header row -->
-    <thead>
-        <tr>
-            <th>Rank</th>
-            <th>User ID</th>
-            <th>Language</th>
-            <th>XP Points</th>
-        </tr>
-    </thead>
-    <!-- Data rows -->
-    <tbody>
-        @{
-            int rank = 1;
-        }
-        @foreach (var item in Model)
-        {
-            <!-- table-active: highlights current user's row (mock UserId 1) -->
-            <tr class="@(item.UserId == 1 ? "table-active" : "")">
-                <td>@rank</td>
-                <td>User #@item.UserId</td>
-                <td>@(item.Course?.Title ?? "N/A")</td>
-                <td>@item.TotalXP</td>
-            </tr>
-            rank++;
-        }
-        @if (!Model.Any())
-        {
-            <tr>
-                <td colspan="4" class="text-center">No data available.</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<h1 class="h4 mb-4">Global Leaderboard</h1>
+
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="px-4">Rank</th>
+                    <th>User</th>
+                    <th>Course</th>
+                    <th class="text-end px-4">XP Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int rank = 1;
+                }
+                @foreach (var item in Model)
+                {
+                    bool isCurrentUser = currentUser != null && item.UserId == currentUser.Id;
+                    <tr class="@(isCurrentUser ? "table-primary fw-bold" : "")">
+                        <td class="px-4">
+                            @if (rank <= 3)
+                            {
+                                <span class="badge rounded-pill @(rank == 1 ? "bg-warning text-dark" : rank == 2 ? "bg-secondary" : "bg-bronze")">@rank</span>
+                            }
+                            else
+                            {
+                                <span>@rank</span>
+                            }
+                        </td>
+                        <td>@(item.User?.FirstName ?? "Student")</td>
+                        <td>@(item.Course?.Title ?? "N/A")</td>
+                        <td class="text-end px-4">@item.TotalXP.ToString("N0")</td>
+                    </tr>
+                    rank++;
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">No data available.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .bg-bronze { background-color: #cd7f32; color: white; }
+</style>

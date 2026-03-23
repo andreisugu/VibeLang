@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using VibeLang.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace VibeLang.Controllers;
 
@@ -21,36 +23,116 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Leaderboard()
     {
-        // Fetch top stats, including the Course name for the leaderboard
+        // Fetch top stats, including the Course and User name for the leaderboard
         var stats = await _context.UserCourseStats
             .Include(s => s.Course)
+            .Include(s => s.User)
             .OrderByDescending(s => s.TotalXP)
             .Take(10)
             .ToListAsync();
         return View(stats);
     }
 
-    public async Task<IActionResult> Lesson()
+    public async Task<IActionResult> Lesson(int? id)
     {
-        // Fetch a sample lesson with its vocabulary words
-        var lesson = await _context.Lessons
-            .Include(l => l.VocabularyWords)
-            .OrderBy(l => l.Id) // Deterministic order
-            .FirstOrDefaultAsync();
+        Lesson? lesson;
+        if (id.HasValue)
+        {
+            lesson = await _context.Lessons
+                .Include(l => l.Chapter)
+                .FirstOrDefaultAsync(l => l.Id == id.Value);
+        }
+        else
+        {
+            lesson = await _context.Lessons
+                .Include(l => l.Chapter)
+                .OrderBy(l => l.Id)
+                .FirstOrDefaultAsync();
+        }
         
         return View(lesson);
     }
 
-    public async Task<IActionResult> Quiz()
+    [HttpGet]
+    public async Task<IActionResult> GetLessonData(int id)
     {
-        // Fetch a sample quiz with questions and options
-        var quiz = await _context.Quizzes
-            .Include(q => q.Questions)
-                .ThenInclude(o => o.Options)
-            .OrderBy(q => q.Id) // Deterministic order
-            .FirstOrDefaultAsync();
+        var lesson = await _context.Lessons.FindAsync(id);
+        if (lesson == null || string.IsNullOrEmpty(lesson.ContentJson))
+        {
+            return NotFound();
+        }
+        return Content(lesson.ContentJson, "application/json");
+    }
 
-        return View(quiz);
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SubmitResult([FromBody] LessonResult result)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var lesson = await _context.Lessons
+            .Include(l => l.Chapter)
+            .FirstOrDefaultAsync(l => l.Id == result.LessonId);
+        
+        if (lesson == null) return NotFound();
+
+        // 1. Update Lesson Progress
+        var progress = await _context.UserLessonProgresses
+            .FirstOrDefaultAsync(p => p.UserId == user.Id && p.LessonId == lesson.Id);
+        
+        if (progress == null)
+        {
+            progress = new UserLessonProgress
+            {
+                UserId = user.Id,
+                LessonId = lesson.Id,
+                IsCompleted = true,
+                ScoreAchieved = result.Score,
+                CompletionDate = DateTime.UtcNow
+            };
+            _context.UserLessonProgresses.Add(progress);
+        }
+        else
+        {
+            progress.IsCompleted = true;
+            progress.ScoreAchieved = Math.Max(progress.ScoreAchieved, result.Score);
+            progress.CompletionDate = DateTime.UtcNow;
+        }
+
+        // 2. Update Course Stats (XP and Streak)
+        var stats = await _context.UserCourseStats
+            .FirstOrDefaultAsync(s => s.UserId == user.Id && s.CourseId == lesson.Chapter!.CourseId);
+        
+        if (stats == null)
+        {
+            stats = new UserCourseStats
+            {
+                UserId = user.Id,
+                CourseId = lesson.Chapter!.CourseId,
+                TotalXP = result.Score,
+                CurrentStreak = 1
+            };
+            _context.UserCourseStats.Add(stats);
+        }
+        else
+        {
+            stats.TotalXP += result.Score;
+            // Simple streak logic: if last lesson was today or yesterday, increment or keep
+            // For now, just incrementing for simplicity
+            stats.CurrentStreak++;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Json(new { success = true, xpAdded = result.Score, totalXP = stats.TotalXP });
+    }
+
+    public class LessonResult
+    {
+        public int LessonId { get; set; }
+        public int Score { get; set; }
     }
 
     public async Task<IActionResult> Vocabulary()
@@ -64,7 +146,7 @@ public class HomeController : Controller
         if (user != null)
         {
             var userProgress = await _context.UserVocabularies
-                .Where(uv => uv.UserId.ToString() == user.Id) 
+                .Where(uv => uv.UserId == user.Id) 
                 .ToDictionaryAsync(uv => uv.WordId, uv => uv.Status);
             ViewBag.UserProgress = userProgress;
         }
@@ -85,7 +167,7 @@ public class HomeController : Controller
         {
             // Show the user's overall stats on the dashboard
             var stats = await _context.UserCourseStats
-                .Where(s => s.UserId.ToString() == user.Id)
+                .Where(s => s.UserId == user.Id)
                 .OrderByDescending(s => s.TotalXP)
                 .FirstOrDefaultAsync();
             return View(stats);
@@ -98,7 +180,6 @@ public class HomeController : Controller
     {
         // Fetch all courses with their chapters and lessons
         var courses = await _context.Courses
-            .Include(c => c.Language)
             .Include(c => c.Chapters.OrderBy(ch => ch.Order))
                 .ThenInclude(ch => ch.Lessons.OrderBy(l => l.Order))
             .ToListAsync();

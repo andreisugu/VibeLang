@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VibeLang.Models;
@@ -11,9 +12,11 @@ using VibeLang.Models;
 namespace VibeLang.Migrations
 {
     [DbContext(typeof(VibeLangDbContext))]
-    partial class VibeLangDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323193440_RefactorLanguageToCourse")]
+    partial class RefactorLanguageToCourse
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -312,10 +315,11 @@ namespace VibeLang.Migrations
                     b.Property<int>("ChapterId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("ContentJson")
+                    b.Property<string>("Difficulty")
                         .HasColumnType("text");
 
-                    b.Property<string>("Difficulty")
+                    b.Property<string>("LessonType")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("Order")
@@ -427,15 +431,12 @@ namespace VibeLang.Migrations
                     b.Property<int>("TotalXP")
                         .HasColumnType("integer");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("UserCourseStats", (string)null);
                 });
@@ -460,15 +461,12 @@ namespace VibeLang.Migrations
                     b.Property<int>("ScoreAchieved")
                         .HasColumnType("integer");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("LessonId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("UserLessonProgresses", (string)null);
                 });
@@ -488,16 +486,13 @@ namespace VibeLang.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("WordId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.HasIndex("WordId");
 
@@ -647,15 +642,7 @@ namespace VibeLang.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VibeLang.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Course");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("VibeLang.Models.UserLessonProgress", b =>
@@ -666,32 +653,16 @@ namespace VibeLang.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VibeLang.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Lesson");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("VibeLang.Models.UserVocabulary", b =>
                 {
-                    b.HasOne("VibeLang.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("VibeLang.Models.VocabularyWord", "Word")
                         .WithMany()
                         .HasForeignKey("WordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("User");
 
                     b.Navigation("Word");
                 });

@@ -1,25 +1,30 @@
-@model VibeLang.Models.Language
+@model VibeLang.Models.Course
 
 @{
-    ViewData["Title"] = "Edit Language";
+    ViewData["Title"] = "Edit Course";
 }
 
-<h1 class="h4">Edit Language</h1>
+<h1 class="h4">Edit Course</h1>
 
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
             <div class="mb-3">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label asp-for="IsoCode" class="form-label"></label>
                 <input asp-for="IsoCode" class="form-control" />
                 <span asp-validation-for="IsoCode" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <input type="submit" value="Save" class="btn btn-primary rounded-pill" />

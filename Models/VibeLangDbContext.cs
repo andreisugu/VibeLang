@@ -11,7 +11,6 @@ public class VibeLangDbContext : IdentityDbContext<ApplicationUser>
     }
 
     // Content
-    public DbSet<Language> Languages { get; set; }
     public DbSet<Course> Courses { get; set; }
     public DbSet<Chapter> Chapters { get; set; }
     public DbSet<Lesson> Lessons { get; set; }
@@ -32,7 +31,6 @@ public class VibeLangDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder);
         
-        modelBuilder.Entity<Language>().ToTable("Languages");
         modelBuilder.Entity<Course>().ToTable("Courses");
         modelBuilder.Entity<Chapter>().ToTable("Chapters");
         modelBuilder.Entity<Lesson>().ToTable("Lessons");

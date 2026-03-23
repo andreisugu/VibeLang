@@ -4,116 +4,116 @@ using VibeLang.Models;
 
 namespace VibeLang.Controllers;
 
-public class LanguagesController : Controller
+public class CoursesController : Controller
 {
     private readonly VibeLangDbContext _context;
 
-    public LanguagesController(VibeLangDbContext context)
+    public CoursesController(VibeLangDbContext context)
     {
         _context = context;
     }
 
-    // GET: Languages
+    // GET: Courses
     public async Task<IActionResult> Index()
     {
-        return View(await _context.Languages.ToListAsync());
+        return View(await _context.Courses.ToListAsync());
     }
 
-    // GET: Languages/Details/5
+    // GET: Courses/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
 
-        var language = await _context.Languages
+        var course = await _context.Courses
             .FirstOrDefaultAsync(m => m.Id == id);
-        if (language == null) return NotFound();
+        if (course == null) return NotFound();
 
-        return View(language);
+        return View(course);
     }
 
-    // GET: Languages/Create
+    // GET: Courses/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: Languages/Create
+    // POST: Courses/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,Name,IsoCode")] Language language)
+    public async Task<IActionResult> Create([Bind("Id,Title,Description,IsoCode")] Course course)
     {
         if (ModelState.IsValid)
         {
-            _context.Add(language);
+            _context.Add(course);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-        return View(language);
+        return View(course);
     }
 
-    // GET: Languages/Edit/5
+    // GET: Courses/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
 
-        var language = await _context.Languages.FindAsync(id);
-        if (language == null) return NotFound();
-        return View(language);
+        var course = await _context.Courses.FindAsync(id);
+        if (course == null) return NotFound();
+        return View(course);
     }
 
-    // POST: Languages/Edit/5
+    // POST: Courses/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Name,IsoCode")] Language language)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,IsoCode")] Course course)
     {
-        if (id != language.Id) return NotFound();
+        if (id != course.Id) return NotFound();
 
         if (ModelState.IsValid)
         {
             try
             {
-                _context.Update(language);
+                _context.Update(course);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!LanguageExists(language.Id)) return NotFound();
+                if (!CourseExists(course.Id)) return NotFound();
                 else throw;
             }
             return RedirectToAction(nameof(Index));
         }
-        return View(language);
+        return View(course);
     }
 
-    // GET: Languages/Delete/5
+    // GET: Courses/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
 
-        var language = await _context.Languages
+        var course = await _context.Courses
             .FirstOrDefaultAsync(m => m.Id == id);
-        if (language == null) return NotFound();
+        if (course == null) return NotFound();
 
-        return View(language);
+        return View(course);
     }
 
-    // POST: Languages/Delete/5
+    // POST: Courses/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var language = await _context.Languages.FindAsync(id);
-        if (language != null)
+        var course = await _context.Courses.FindAsync(id);
+        if (course != null)
         {
-            _context.Languages.Remove(language);
+            _context.Courses.Remove(course);
         }
 
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
 
-    private bool LanguageExists(int id)
+    private bool CourseExists(int id)
     {
-        return _context.Languages.Any(e => e.Id == id);
+        return _context.Courses.Any(e => e.Id == id);
     }
 }

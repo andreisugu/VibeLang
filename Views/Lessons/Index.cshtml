@@ -1,0 +1,36 @@
+@model IEnumerable<VibeLang.Models.Lesson>
+
+@{
+    ViewData["Title"] = "Manage Lessons";
+}
+
+<h1 class="h4">Lessons</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary rounded-pill">Add New Lesson</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Course - Chapter</th>
+            <th>Title</th>
+            <th>Difficulty</th>
+            <th>Order</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.Chapter?.Course?.Title - @item.Chapter?.Title</td>
+            <td>@item.Title</td>
+            <td>@item.Difficulty</td>
+            <td>@item.Order</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

@@ -1,0 +1,52 @@
+@model VibeLang.Models.Lesson
+
+@{
+    ViewData["Title"] = "Edit Lesson";
+}
+
+<h1 class="h4">Edit Lesson</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="ChapterId" class="form-label">Chapter</label>
+                <select asp-for="ChapterId" class ="form-select" asp-items="ViewBag.ChapterId"></select>
+                <span asp-validation-for="ChapterId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Difficulty" class="form-label"></label>
+                <input asp-for="Difficulty" class="form-control" />
+                <span asp-validation-for="Difficulty" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Order" class="form-label"></label>
+                <input asp-for="Order" class="form-control" type="number" />
+                <span asp-validation-for="Order" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ContentJson" class="form-label">Lesson Content (JSON)</label>
+                <textarea asp-for="ContentJson" class="form-control" rows="10"></textarea>
+                <span asp-validation-for="ContentJson" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <input type="submit" value="Save" class="btn btn-primary rounded-pill" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

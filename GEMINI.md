@@ -21,16 +21,21 @@ VibeLang is an ASP.NET Core MVC application designed for language learning, focu
 
 ## 🛠️ Key Components & Models
 
-- **Content Hierarchy:** Language -> Course -> Chapter -> Lesson -> (VocabularyWords / Quizzes).
-- **Quiz System:** Supports multiple question types (RO->EN, EN->RO, Matching, Context).
-- **User Progress:** Tracks XP, streaks, completed lessons, and vocabulary status ("New", "Learned").
+- **Content Hierarchy:** Course -> Chapter -> Lesson.
+- **Dynamic Lesson Parser:** Lessons use a `ContentJson` field to store interactive quizzes. The frontend (`lesson-parser.js`) handles:
+    - Tip 1: RO -> EN with word bank hints.
+    - Tip 2: EN -> RO with free text input.
+    - Tip 3: Matching pairs grid.
+    - Tip 4: Context/Information display.
+- **Normalization:** Custom logic for Romanian character normalization (ă, î, ș, ț, â) during answer comparison.
+- **User Progress:** Tracks XP and streaks. `UserId` in progress tables is a `string` linked to `AspNetUsers.Id`.
 
 ## 📝 Development Guidelines
 
 ### 1. Database & Migrations
 - Always use Entity Framework Core migrations for schema changes.
 - Ensure `DbInitializer.cs` is updated if new seed data is required.
-- The project uses PostgreSQL; ensure Npgsql compatibility.
+- **Note:** Progress tables use `string UserId` to match ASP.NET Identity.
 
 ### 2. Identity & User Context
 - Use `ApplicationUser` for user-related data (includes `FirstName`, `LastName`).

@@ -1,46 +1,121 @@
 @model VibeLang.Models.Lesson
 
 @{
-    ViewData["Title"] = "Lesson";
+    ViewData["Title"] = "Lesson: " + (Model?.Title ?? "Loading...");
 }
 
-<div class="d-flex flex-column align-items-center justify-content-center" style="min-height:60vh;">
-    @if (Model == null)
-    {
-        <div class="alert alert-info">No lessons available. Please add some to the database!</div>
-    }
-    else
-    {
-        <!-- Vocabulary word display with action buttons -->
-        <!-- card: styled container, p-4: internal padding -->
-        <div class="card text-center shadow-sm p-4" style="max-width:400px; width: 100%;">
-            <div class="mb-2 text-muted small">Lesson: @Model.Title</div>
-            
-            @if (Model.VocabularyWords.Any())
-            {
-                var word = Model.VocabularyWords.First();
-                <!-- h2: large heading for word -->
-                <div class="h2">@word.Word</div>
-                <!-- mb-4: bottom margin for spacing -->
-                <div class="mb-4">@word.Translation</div>
-                @if (!string.IsNullOrEmpty(word.ExampleSentence))
-                {
-                    <div class="fst-italic mb-3">"@word.ExampleSentence"</div>
-                }
-            }
-            else
-            {
-                <div class="mb-4">No words in this lesson yet.</div>
-            }
-
-            <!-- d-flex: horizontal layout, gap-2: spacing between buttons -->
-            <div class="d-flex gap-2">
-                <!-- flex-fill: equal width buttons -->
-                <button class="btn btn-secondary rounded-pill flex-fill">Repeat</button>
-                <button class="btn btn-success rounded-pill flex-fill">Learned</button>
+<div class="container py-4">
+    <div id="quiz-container" class="mx-auto" style="max-width: 700px;">
+        @if (Model == null)
+        {
+            <div class="alert alert-info">No lesson found.</div>
+        }
+        else
+        {
+            <!-- Progress Bar -->
+            <div class="progress mb-4" style="height: 10px;">
+                <div id="quiz-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%;"></div>
             </div>
-            <!-- btn-link: text link styled button -->
-            <a asp-controller="Home" asp-action="Quiz" class="btn btn-link mt-3 p-0">Start quiz</a>
-        </div>
-    }
+
+            <div class="card shadow-sm border-0 overflow-hidden">
+                <div class="card-body p-4 p-md-5">
+                    
+                    <!-- Question Header -->
+                    <div id="question-header" class="mb-4">
+                        <h2 id="question-text" class="h4 fw-bold">Loading question...</h2>
+                        <div id="question-hint" class="text-muted small"></div>
+                    </div>
+
+                    <!-- Question Content Area -->
+                    <div id="question-content" class="mb-4">
+                        <!-- Dynamic content for Tip 1, 2, 3, 4 will be injected here -->
+                    </div>
+
+                    <!-- Feedback Area -->
+                    <div id="feedback-area" class="mb-4 d-none">
+                        <div id="feedback-message" class="alert p-3 mb-0"></div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div id="quiz-controls" class="d-flex gap-2">
+                        <button id="btn-check" class="btn btn-primary rounded-pill px-5 py-2 fw-bold">Check</button>
+                        <button id="btn-next" class="btn btn-success rounded-pill px-5 py-2 fw-bold d-none">Continue</button>
+                        <button id="btn-skip" class="btn btn-outline-secondary rounded-pill px-4 py-2 d-none">Skip</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results View (Hidden by default) -->
+            <div id="results-view" class="card shadow-sm border-0 d-none">
+                <div class="card-body p-5 text-center">
+                    <div class="display-1 text-success mb-3"><i class="bi bi-trophy-fill"></i></div>
+                    <h2 class="fw-bold mb-3">Lesson Complete!</h2>
+                    <p class="text-muted mb-4">You've finished this lesson. Here's how you did:</p>
+                    
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-6 col-md-4">
+                            <div class="p-3 bg-light rounded shadow-sm">
+                                <div class="h3 mb-0 fw-bold text-primary" id="final-score">0</div>
+                                <div class="small text-muted">Total Score</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="p-3 bg-light rounded shadow-sm">
+                                <div class="h3 mb-0 fw-bold text-success" id="xp-earned">+0</div>
+                                <div class="small text-muted">XP Earned</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a asp-action="Courses" class="btn btn-primary rounded-pill px-5">Back to Courses</a>
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+@if (Model != null)
+{
+    @Html.AntiForgeryToken()
+    <script>
+        window.lessonId = @Model.Id;
+    </script>
+    <script src="~/js/lesson-parser.js"></script>
+}
+
+<style>
+    .word-bank-btn {
+        margin: 0.25rem;
+        transition: all 0.2s ease;
+    }
+    .word-bank-btn:hover {
+        transform: translateY(-2px);
+    }
+    .matching-word {
+        cursor: pointer;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 2px solid #dee2e6;
+        background: white;
+        text-align: center;
+        transition: all 0.2s;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .matching-word.selected {
+        border-color: #0d6efd;
+        background-color: #e7f1ff;
+    }
+    .matching-word.correct {
+        border-color: #198754;
+        background-color: #d1e7dd;
+        pointer-events: none;
+        opacity: 0.6;
+    }
+    .matching-word.incorrect {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+    }
+</style>
