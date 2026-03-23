@@ -1,5 +1,8 @@
+@model IEnumerable<VibeLang.Models.VocabularyWord>
+
 @{
     ViewData["Title"] = "Vocabulary";
+    var userProgress = ViewBag.UserProgress as Dictionary<int, string> ?? new Dictionary<int, string>();
 }
 
 <h1 class="h4">Vocabulary</h1>
@@ -7,17 +10,30 @@
 <select class="form-select w-auto mb-3">
     <option>Filter by language</option>
 </select>
+
 <!-- list-group: Bootstrap styled list -->
 <ul class="list-group">
-    <!-- d-flex: horizontal layout, justify-content-between: space items apart, align-items-center: vertical center -->
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        Slay
-        <!-- bg-success: green background badge -->
-        <span class="badge bg-success">Learned</span>
-    </li>
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        Ghosting
-        <!-- bg-secondary: gray background badge -->
-        <span class="badge bg-secondary">New</span>
-    </li>
+    @if (!Model.Any())
+    {
+        <li class="list-group-item">No vocabulary found.</li>
+    }
+    else
+    {
+        @foreach (var word in Model)
+        {
+            userProgress.TryGetValue(word.Id, out var status);
+            status = status ?? "New";
+
+            <!-- d-flex: horizontal layout, justify-content-between: space items apart, align-items-center: vertical center -->
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>@word.Word</strong>
+                    <span class="text-muted ms-2">- @word.Translation</span>
+                </div>
+                
+                <!-- bg-success: green, bg-secondary: gray -->
+                <span class="badge @(status == "Learned" ? "bg-success" : "bg-secondary")">@status</span>
+            </li>
+        }
+    }
 </ul>

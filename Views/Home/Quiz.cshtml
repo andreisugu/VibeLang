@@ -1,15 +1,40 @@
+@model VibeLang.Models.Quiz
+
 @{
     ViewData["Title"] = "Quiz";
 }
 
-<!-- Quiz question -->
-<h3 class="mb-4">What does "Ghosting" mean?</h3>
-<!-- list-group: Bootstrap list of items, mb-3: bottom margin -->
-<div class="list-group mb-3">
-    <!-- list-group-item-action: makes item interactive/hoverable -->
-    <button class="list-group-item list-group-item-action">Fantasma</button>
-    <button class="list-group-item list-group-item-action">Ignorar</button>
-    <button class="list-group-item list-group-item-action">Bailar</button>
-</div>
-<!-- rounded-pill: button with curved edges -->
-<button class="btn btn-primary rounded-pill">Check</button>
+<main class="container my-4">
+    @if (Model == null)
+    {
+        <div class="alert alert-info">No quizzes available for this lesson yet.</div>
+    }
+    else
+    {
+        <div class="mb-2 text-muted small">Quiz: @Model.Title</div>
+
+        @foreach (var question in Model.Questions)
+        {
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <!-- Quiz question -->
+                    <h3 class="h5 mb-4">@question.QuestionText</h3>
+                    
+                    <!-- list-group: Bootstrap list of items, mb-3: bottom margin -->
+                    <div class="list-group mb-3">
+                        @foreach (var option in question.Options)
+                        {
+                            <!-- list-group-item-action: makes item interactive/hoverable -->
+                            <button type="button" class="list-group-item list-group-item-action">
+                                @option.OptionText
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        
+        <!-- rounded-pill: button with curved edges -->
+        <button class="btn btn-primary rounded-pill">Submit Quiz</button>
+    }
+</main>

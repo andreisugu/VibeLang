@@ -1,8 +1,9 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace VibeLang.Models;
 
-public class VibeLangDbContext : DbContext
+public class VibeLangDbContext : IdentityDbContext<ApplicationUser>
 {
     public VibeLangDbContext(DbContextOptions<VibeLangDbContext> options)
         : base(options)
@@ -12,6 +13,7 @@ public class VibeLangDbContext : DbContext
     // Content
     public DbSet<Language> Languages { get; set; }
     public DbSet<Course> Courses { get; set; }
+    public DbSet<Chapter> Chapters { get; set; }
     public DbSet<Lesson> Lessons { get; set; }
     public DbSet<VocabularyWord> VocabularyWords { get; set; }
 
@@ -30,9 +32,9 @@ public class VibeLangDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         
-        // Ensure table names are clean in PostgreSQL
         modelBuilder.Entity<Language>().ToTable("Languages");
         modelBuilder.Entity<Course>().ToTable("Courses");
+        modelBuilder.Entity<Chapter>().ToTable("Chapters");
         modelBuilder.Entity<Lesson>().ToTable("Lessons");
         modelBuilder.Entity<VocabularyWord>().ToTable("VocabularyWords");
         modelBuilder.Entity<UserVocabulary>().ToTable("UserVocabularies");

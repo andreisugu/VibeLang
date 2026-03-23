@@ -27,8 +27,9 @@
         <a class="nav-link mx-2" asp-controller="Home" asp-action="Leaderboard">Leaderboard</a>
         <a class="nav-link mx-2 text-primary" asp-controller="Languages" asp-action="Index"><b>[Admin] Languages</b></a>
         <!-- User info pushed to right side -->
-        <span class="ms-auto me-2">Sugubete Andrei | sugubete.andrei@email.com</span>
-        <a class="nav-link ms-2" asp-controller="Home" asp-action="Profile">Profile</a>
+        <div class="ms-auto">
+            <partial name="_LoginPartial" />
+        </div>
     </nav>
 
     <!-- Main content area -->

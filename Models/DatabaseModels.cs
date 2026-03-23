@@ -26,10 +26,10 @@ public class Course
     public int LanguageId { get; set; }
     [ForeignKey("LanguageId")]
     public Language? Language { get; set; }
-    public ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+    public ICollection<Chapter> Chapters { get; set; } = new List<Chapter>();
 }
 
-public class Lesson
+public class Chapter
 {
     [Key]
     public int Id { get; set; }
@@ -39,7 +39,26 @@ public class Lesson
     public int CourseId { get; set; }
     [ForeignKey("CourseId")]
     public Course? Course { get; set; }
+    public ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+}
+
+public class Lesson
+{
+    [Key]
+    public int Id { get; set; }
+    [Required]
+    public string Title { get; set; } = string.Empty;
+    [Required]
+    public string LessonType { get; set; } = "Vocabulary"; // e.g., "Vocabulary", "Quiz", "Grammar"
+    public string? Difficulty { get; set; } // Matches JSON "dificultate"
+    public int Order { get; set; }
+    
+    public int ChapterId { get; set; }
+    [ForeignKey("ChapterId")]
+    public Chapter? Chapter { get; set; }
+
     public ICollection<VocabularyWord> VocabularyWords { get; set; } = new List<VocabularyWord>();
+    public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
 }
 
 public class VocabularyWord
@@ -56,17 +75,17 @@ public class VocabularyWord
     public Lesson? Lesson { get; set; }
 }
 
-/* --- PROGRESS & TRACKING TABLES (The "Real App" Logic) --- */
+/* --- PROGRESS & TRACKING TABLES --- */
 
 public class UserVocabulary
 {
     [Key]
     public int Id { get; set; }
-    public int UserId { get; set; } // Reference to User table (managed externally)
+    public int UserId { get; set; }
     public int WordId { get; set; }
     [ForeignKey("WordId")]
     public VocabularyWord? Word { get; set; }
-    public string Status { get; set; } = "New"; // "Learned", "New", "Mastered"
+    public string Status { get; set; } = "New";
     public DateTime LastReviewed { get; set; } = DateTime.UtcNow;
 }
 
@@ -122,7 +141,12 @@ public class QuizQuestion
 {
     [Key]
     public int Id { get; set; }
+    [Required]
     public string QuestionText { get; set; } = string.Empty;
+    public int Tip { get; set; } // Matches JSON "tip" (1, 2, 3, 4)
+    public string? CorrectAnswer { get; set; } // For Tip 1 & 2
+    public string? MatchingDataJson { get; set; } // For Tip 3 (Serialized left/right words)
+
     public int QuizId { get; set; }
     [ForeignKey("QuizId")]
     public Quiz? Quiz { get; set; }
