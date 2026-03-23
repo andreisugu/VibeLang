@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "_AdminLayout";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="h3 mb-4">Admin Dashboard</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body text-center">
+                <i class="bi bi-book-fill text-primary display-4 mb-3"></i>
+                <h5 class="card-title">Courses</h5>
+                <p class="card-text text-muted">Manage language courses and general settings.</p>
+                <a asp-controller="Courses" asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">Manage Courses</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body text-center">
+                <i class="bi bi-journal-bookmark-fill text-secondary display-4 mb-3"></i>
+                <h5 class="card-title">Chapters</h5>
+                <p class="card-text text-muted">Manage chapters within courses.</p>
+                <a asp-controller="Chapters" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Manage Chapters</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body text-center">
+                <i class="bi bi-play-circle-fill text-info display-4 mb-3"></i>
+                <h5 class="card-title">Lessons</h5>
+                <p class="card-text text-muted">Manage lessons and interactive JSON content.</p>
+                <a asp-controller="Lessons" asp-action="Index" class="btn btn-outline-info rounded-pill px-4">Manage Lessons</a>
+            </div>
+        </div>
+    </div>
+</div>

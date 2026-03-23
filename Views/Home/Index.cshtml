@@ -22,7 +22,19 @@
     </div>
     <!-- Button to resume last lesson -->
     <div class="col">
+        @if (ViewBag.ContinueLesson != null)
+        {
+            var lesson = ViewBag.ContinueLesson as VibeLang.Models.Lesson;
+            <div class="card shadow-sm border-0 mb-2">
+                <div class="card-body py-2 px-3 small">
+                    <div class="text-muted fw-bold text-uppercase" style="font-size: 0.7rem;">Last Active:</div>
+                    <div class="text-primary truncate">@lesson?.Chapter?.Course?.Title</div>
+                    <div class="text-secondary truncate">@lesson?.Chapter?.Title</div>
+                    <div class="fw-bold truncate">@lesson?.Title</div>
+                </div>
+            </div>
+        }
         <!-- w-100: full width, rounded-pill: rounded button -->
-        <a asp-controller="Home" asp-action="Lesson" class="btn btn-primary rounded-pill w-100">Continue last lesson</a>
+        <a asp-controller="Home" asp-action="Lesson" asp-route-id="@ViewBag.LastLessonId" class="btn btn-primary rounded-pill w-100">Continue last lesson</a>
     </div>
 </div>
