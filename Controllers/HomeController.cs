@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using VibeLang.Models;
 
 namespace VibeLang.Controllers;
@@ -7,10 +8,12 @@ namespace VibeLang.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly VibeLangDbContext _context;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, VibeLangDbContext context)
     {
         _logger = logger;
+        _context = context;
     }
 
     public IActionResult Index()
@@ -18,9 +21,10 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult Courses()
+    public async Task<IActionResult> Courses()
     {
-        return View();
+        var languages = await _context.Languages.ToListAsync();
+        return View(languages);
     }
 
     public IActionResult Leaderboard()

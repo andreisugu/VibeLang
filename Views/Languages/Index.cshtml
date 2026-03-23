@@ -1,0 +1,33 @@
+@model IEnumerable<VibeLang.Models.Language>
+
+@{
+    ViewData["Title"] = "Languages";
+}
+
+<h1 class="h4">Languages</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary rounded-pill">Create New Language</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>ISO Code</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.Name</td>
+            <td>@item.IsoCode</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

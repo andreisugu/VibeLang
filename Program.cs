@@ -1,7 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+using VibeLang.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register DbContext with PostgreSQL
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<VibeLangDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 var app = builder.Build();
 

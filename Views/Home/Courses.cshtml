@@ -1,3 +1,5 @@
+@model IEnumerable<VibeLang.Models.Language>
+
 @{
     ViewData["Title"] = "Courses";
 }
@@ -5,41 +7,32 @@
 <h1 class="h4">Choose a new language</h1>
 <!-- btn-link: text link styled button -->
 <a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link p-0 mb-3">Vocabulary</a>
-<!-- 3 equal-width columns for language courses -->
+
+<!-- Dynamic list of language courses from Database -->
 <div class="row mt-4">
-    <div class="col">
-        <!-- card with language, button, and link -->
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                English
-                <br>
-                <!-- btn-sm: small button size -->
-                <button class="btn btn-primary btn-sm rounded-pill mt-2">Start</button>
-                <br>
-                <a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link btn-sm p-0 mt-1">Vocabulary</a>
-            </div>
+    @if (!Model.Any())
+    {
+        <div class="col-12">
+            <div class="alert alert-info">No languages added yet. Please use the [Admin] Languages link to add some!</div>
         </div>
-    </div>
-    <div class="col">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                Spanish
-                <br>
-                <button class="btn btn-primary btn-sm rounded-pill mt-2">Start</button>
-                <br>
-                <a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link btn-sm p-0 mt-1">Vocabulary</a>
+    }
+    else
+    {
+        @foreach (var language in Model)
+        {
+            <div class="col-md-4 mb-3">
+                <!-- card with language, button, and link -->
+                <div class="card text-center shadow-sm">
+                    <div class="card-body">
+                        <strong>@language.Name (@language.IsoCode)</strong>
+                        <br>
+                        <!-- btn-sm: small button size -->
+                        <button class="btn btn-primary btn-sm rounded-pill mt-2">Start Course</button>
+                        <br>
+                        <a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link btn-sm p-0 mt-1">Review Vocabulary</a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">
-                German
-                <br>
-                <button class="btn btn-primary btn-sm rounded-pill mt-2">Start</button>
-                <br>
-                <a asp-controller="Home" asp-action="Vocabulary" class="btn btn-link btn-sm p-0 mt-1">Vocabulary</a>
-            </div>
-        </div>
-    </div>
+        }
+    }
 </div>
