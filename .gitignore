@@ -188,3 +188,4 @@ Thumbs.db
 ~$*
 *~
 DocProject/Help/*.hhk
+appsettings.Development.json
