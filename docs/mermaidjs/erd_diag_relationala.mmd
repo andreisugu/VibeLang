@@ -1,0 +1,109 @@
+erDiagram
+    %% Tabelul de Utilizatori (Identity)
+    AspNetUsers {
+        string Id PK
+        string UserName
+        string Email
+    }
+
+    %% Tabele de Conținut (Structura Cursului)
+    Course {
+        int Id PK
+        string Title
+        string Description
+        string IsoCode
+    }
+    Chapter {
+        int Id PK
+        string Title
+        int Order
+        int CourseId FK
+    }
+    Lesson {
+        int Id PK
+        string Title
+        string Difficulty
+        int Order
+        string ContentJson
+        int ChapterId FK
+    }
+    VocabularyWord {
+        int Id PK
+        string Word
+        string Translation
+        string ExampleSentence
+        int LessonId FK
+    }
+
+    %% Tabele de Evaluare (Teste)
+    Quiz {
+        int Id PK
+        string Title
+        int LessonId FK
+    }
+    QuizQuestion {
+        int Id PK
+        string QuestionText
+        int Tip
+        string CorrectAnswer
+        string MatchingDataJson
+        int QuizId FK
+    }
+    QuizOption {
+        int Id PK
+        string OptionText
+        bool IsCorrect
+        int QuestionId FK
+    }
+
+    %% Tabele de Progres și Gamificare
+    UserVocabulary {
+        int Id PK
+        string UserId FK
+        int WordId FK
+        string Status
+        DateTime LastReviewed
+    }
+    UserLessonProgress {
+        int Id PK
+        string UserId FK
+        int LessonId FK
+        bool IsCompleted
+        int ScoreAchieved
+        DateTime CompletionDate
+    }
+    UserCourseStats {
+        int Id PK
+        string UserId FK
+        int CourseId FK
+        int TotalXP
+        int CurrentStreak
+    }
+    Achievement {
+        int Id PK
+        string Title
+        string Description
+        string IconPath
+    }
+
+    %% Definiția Relațiilor (One-to-Many)
+    
+    %% Relații Conținut
+    Course ||--o{ Chapter : "are (1:N)"
+    Chapter ||--o{ Lesson : "conține (1:N)"
+    Lesson ||--o{ VocabularyWord : "predă (1:N)"
+    Lesson ||--o{ Quiz : "are evaluare (1:N)"
+    
+    %% Relații Evaluare
+    Quiz ||--o{ QuizQuestion : "include (1:N)"
+    QuizQuestion ||--o{ QuizOption : "are variante (1:N)"
+
+    %% Relații Progres (Relații de legătură între User și Conținut)
+    AspNetUsers ||--o{ UserVocabulary : "învață"
+    VocabularyWord ||--o{ UserVocabulary : "este urmărit pentru"
+
+    AspNetUsers ||--o{ UserLessonProgress : "parcurge"
+    Lesson ||--o{ UserLessonProgress : "generează progres pentru"
+
+    AspNetUsers ||--o{ UserCourseStats : "deține"
+    Course ||--o{ UserCourseStats : "statistici per"
