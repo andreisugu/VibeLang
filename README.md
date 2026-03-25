@@ -25,6 +25,7 @@ VibeLang is a modern web application for language learning, built on micro-learn
 - **Frontend:** Razor Views, Bootstrap 5, CSS3, JavaScript
 - **CI/CD:** GitHub Actions for automated build and testing
 
+
 ## 🏗️ Architecture
 
 The application follows the MVC (Model-View-Controller) pattern:
@@ -32,6 +33,12 @@ The application follows the MVC (Model-View-Controller) pattern:
 - **Controllers:** Logic for handling requests, interacting with the database, and returning views.
 - **Views:** Dynamic Razor templates for a responsive and interactive user interface.
 - **Data:** `VibeLangDbContext` handles database interactions, with `DbInitializer` for seeding initial content.
+
+## 🗂️ Relational Diagram
+
+<div align="center">
+  <img src="docs/mermaidjs/erd_diag_relationala.svg" alt="Relational Diagram" style="max-width:100%; height:auto;" />
+</div>
 
 ---
 Copyright (c) 2026 Sugubete Andrei. All rights reserved.
