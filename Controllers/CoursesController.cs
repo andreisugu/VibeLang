@@ -1,22 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using VibeLang.Models;
+using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
 public class CoursesController : Controller
 {
-    private readonly VibeLangDbContext _context;
+    private readonly ICourseService _courseService;
 
-    public CoursesController(VibeLangDbContext context)
+    public CoursesController(ICourseService courseService)
     {
-        _context = context;
+        _courseService = courseService;
     }
 
     // GET: Courses
     public async Task<IActionResult> Index()
     {
-        return View(await _context.Courses.ToListAsync());
+        return View(await _courseService.GetAllCoursesAsync());
     }
 
     // GET: Courses/Details/5
@@ -24,8 +26,7 @@ public class CoursesController : Controller
     {
         if (id == null) return NotFound();
 
-        var course = await _context.Courses
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var course = await _courseService.GetCourseByIdAsync(id.Value);
         if (course == null) return NotFound();
 
         return View(course);
@@ -44,8 +45,7 @@ public class CoursesController : Controller
     {
         if (ModelState.IsValid)
         {
-            _context.Add(course);
-            await _context.SaveChangesAsync();
+            await _courseService.AddCourseAsync(course);
             return RedirectToAction(nameof(Index));
         }
         return View(course);
@@ -56,7 +56,7 @@ public class CoursesController : Controller
     {
         if (id == null) return NotFound();
 
-        var course = await _context.Courses.FindAsync(id);
+        var course = await _courseService.GetCourseByIdAsync(id.Value);
         if (course == null) return NotFound();
         return View(course);
     }
@@ -72,12 +72,11 @@ public class CoursesController : Controller
         {
             try
             {
-                _context.Update(course);
-                await _context.SaveChangesAsync();
+                await _courseService.UpdateCourseAsync(course);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CourseExists(course.Id)) return NotFound();
+                if (!await CourseExists(course.Id)) return NotFound();
                 else throw;
             }
             return RedirectToAction(nameof(Index));
@@ -90,8 +89,7 @@ public class CoursesController : Controller
     {
         if (id == null) return NotFound();
 
-        var course = await _context.Courses
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var course = await _courseService.GetCourseByIdAsync(id.Value);
         if (course == null) return NotFound();
 
         return View(course);
@@ -102,18 +100,16 @@ public class CoursesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var course = await _context.Courses.FindAsync(id);
+        var course = await _courseService.GetCourseByIdAsync(id);
         if (course != null)
         {
-            _context.Courses.Remove(course);
+            await _courseService.DeleteCourseAsync(id);
         }
-
-        await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
 
-    private bool CourseExists(int id)
+    private async Task<bool> CourseExists(int id)
     {
-        return _context.Courses.Any(e => e.Id == id);
+        return await _courseService.CourseExistsAsync(id);
     }
 }

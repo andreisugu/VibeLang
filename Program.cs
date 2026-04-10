@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using VibeLang.Models;
 using Microsoft.AspNetCore.Identity;
+using VibeLang.Repositories;
+using VibeLang.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,17 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
     options.Password.RequiredLength = 6;
 })
 .AddEntityFrameworkStores<VibeLangDbContext>();
+
+// Register Repositories
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
+builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+
+// Register Services
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IChapterService, ChapterService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
 
 var app = builder.Build();
 

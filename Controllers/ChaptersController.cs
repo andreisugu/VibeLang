@@ -1,28 +1,32 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using VibeLang.Models;
+using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
 public class ChaptersController : Controller
 {
-    private readonly VibeLangDbContext _context;
+    private readonly IChapterService _chapterService;
+    private readonly ICourseService _courseService;
 
-    public ChaptersController(VibeLangDbContext context)
+    public ChaptersController(IChapterService chapterService, ICourseService courseService)
     {
-        _context = context;
+        _chapterService = chapterService;
+        _courseService = courseService;
     }
 
     public async Task<IActionResult> Index()
     {
-        var chapters = await _context.Chapters.Include(c => c.Course).OrderBy(c => c.CourseId).ThenBy(c => c.Order).ToListAsync();
+        var chapters = await _chapterService.GetAllChaptersAsync();
         return View(chapters);
     }
 
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Title");
+        var courses = await _courseService.GetAllCoursesAsync();
+        ViewData["CourseId"] = new SelectList(courses, "Id", "Title");
         return View();
     }
 
@@ -32,20 +36,21 @@ public class ChaptersController : Controller
     {
         if (ModelState.IsValid)
         {
-            _context.Add(chapter);
-            await _context.SaveChangesAsync();
+            await _chapterService.AddChapterAsync(chapter);
             return RedirectToAction(nameof(Index));
         }
-        ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Title", chapter.CourseId);
+        var courses = await _courseService.GetAllCoursesAsync();
+        ViewData["CourseId"] = new SelectList(courses, "Id", "Title", chapter.CourseId);
         return View(chapter);
     }
 
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
-        var chapter = await _context.Chapters.FindAsync(id);
+        var chapter = await _chapterService.GetChapterByIdAsync(id.Value);
         if (chapter == null) return NotFound();
-        ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Title", chapter.CourseId);
+        var courses = await _courseService.GetAllCoursesAsync();
+        ViewData["CourseId"] = new SelectList(courses, "Id", "Title", chapter.CourseId);
         return View(chapter);
     }
 
@@ -56,18 +61,18 @@ public class ChaptersController : Controller
         if (id != chapter.Id) return NotFound();
         if (ModelState.IsValid)
         {
-            _context.Update(chapter);
-            await _context.SaveChangesAsync();
+            await _chapterService.UpdateChapterAsync(chapter);
             return RedirectToAction(nameof(Index));
         }
-        ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Title", chapter.CourseId);
+        var courses = await _courseService.GetAllCoursesAsync();
+        ViewData["CourseId"] = new SelectList(courses, "Id", "Title", chapter.CourseId);
         return View(chapter);
     }
 
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
-        var chapter = await _context.Chapters.Include(c => c.Course).FirstOrDefaultAsync(m => m.Id == id);
+        var chapter = await _chapterService.GetChapterByIdAsync(id.Value);
         if (chapter == null) return NotFound();
         return View(chapter);
     }
@@ -76,9 +81,7 @@ public class ChaptersController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var chapter = await _context.Chapters.FindAsync(id);
-        if (chapter != null) _context.Chapters.Remove(chapter);
-        await _context.SaveChangesAsync();
+        await _chapterService.DeleteChapterAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }
