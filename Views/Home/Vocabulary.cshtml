@@ -3,37 +3,75 @@
 @{
     ViewData["Title"] = "Vocabulary";
     var userProgress = ViewBag.UserProgress as Dictionary<int, string> ?? new Dictionary<int, string>();
+    var courses = ViewBag.Courses as List<VibeLang.Models.Course> ?? new List<VibeLang.Models.Course>();
 }
 
 <h1 class="h4">Vocabulary</h1>
-<!-- form-select: dropdown field, w-auto: auto width -->
-<select class="form-select w-auto mb-3">
-    <option>Filter by language</option>
-</select>
 
-<!-- list-group: Bootstrap styled list -->
-<ul class="list-group">
-    @if (!Model.Any())
-    {
-        <li class="list-group-item">No vocabulary found.</li>
-    }
-    else
-    {
+@if (!User.Identity.IsAuthenticated)
+{
+    <div class="alert alert-info">
+        Please <a asp-area="Identity" asp-page="/Account/Login">log in</a> to view your vocabulary words from completed lessons.
+    </div>
+}
+else if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Complete some lessons to build your vocabulary! Your learned words will appear here.
+    </div>
+}
+else
+{
+    <select id="language-filter" class="form-select w-auto mb-3">
+        <option value="">Filter by language</option>
+        @foreach (var course in courses)
+        {
+            <option value="@course.Id">@course.Title</option>
+        }
+    </select>
+
+    <ul id="vocabulary-list" class="list-group">
         @foreach (var word in Model)
         {
             userProgress.TryGetValue(word.Id, out var status);
             status = status ?? "New";
-
-            <!-- d-flex: horizontal layout, justify-content-between: space items apart, align-items-center: vertical center -->
-            <li class="list-group-item d-flex justify-content-between align-items-center">
+            <li class="list-group-item d-flex justify-content-between align-items-center" data-lesson-id="@word.LessonId">
                 <div>
                     <strong>@word.Word</strong>
                     <span class="text-muted ms-2">- @word.Translation</span>
                 </div>
-                
-                <!-- bg-success: green, bg-secondary: gray -->
                 <span class="badge @(status == "Learned" ? "bg-success" : "bg-secondary")">@status</span>
             </li>
         }
+    </ul>
+}
+
+@section Scripts {
+    @if (User.Identity.IsAuthenticated && Model.Any())
+    {
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterSelect = document.getElementById('language-filter');
+            const vocabularyList = document.getElementById('vocabulary-list');
+            const lessonsMap = @Html.Raw(Json.Serialize(ViewBag.LessonCourseMap ?? new Dictionary<int, int>()));
+            
+            filterSelect.addEventListener('change', function() {
+                const selectedCourseId = this.value ? parseInt(this.value) : null;
+                const items = vocabularyList.querySelectorAll('li');
+                
+                items.forEach(item => {
+                    const lessonId = parseInt(item.dataset.lessonId);
+                    const courseId = lessonsMap[lessonId];
+                    
+                    if (!selectedCourseId || courseId === selectedCourseId) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        </script>
     }
-</ul>
+}
+

@@ -13,6 +13,11 @@ public static class DbInitializer
         // 1. Check for existing data
         if (await context.Courses.AnyAsync())
         {
+            // Seed achievements if they don't exist yet
+            if (!await context.Achievements.AnyAsync())
+            {
+                await SeedAchievements(context);
+            }
             return; // DB has been seeded
         }
 
@@ -108,6 +113,55 @@ public static class DbInitializer
             QuestionText = "Un exemplu de folosire a cuvântului 'hello': 'Hello, how are you?' (Bună, cum ești?)"
         });
 
+        await context.SaveChangesAsync();
+
+        await SeedAchievements(context);
+    }
+
+    private static async Task SeedAchievements(VibeLangDbContext context)
+    {
+        // 6. Add Achievements
+        var achievements = new List<Achievement>
+        {
+            new Achievement 
+            { 
+                Title = "Beginner's Start", 
+                Description = "Complete your first lesson",
+                IconPath = "🎯"
+            },
+            new Achievement 
+            { 
+                Title = "Speed Learner", 
+                Description = "Complete 5 lessons in one day",
+                IconPath = "⚡"
+            },
+            new Achievement 
+            { 
+                Title = "Perfect Score", 
+                Description = "Score 100% on a quiz",
+                IconPath = "💯"
+            },
+            new Achievement 
+            { 
+                Title = "Marathon Runner", 
+                Description = "Maintain a 7-day streak",
+                IconPath = "🏃"
+            },
+            new Achievement 
+            { 
+                Title = "Expert Learner", 
+                Description = "Complete all lessons in a course",
+                IconPath = "⭐"
+            },
+            new Achievement 
+            { 
+                Title = "Social Butterfly", 
+                Description = "Reach the top 10 on the leaderboard",
+                IconPath = "👥"
+            }
+        };
+
+        context.Achievements.AddRange(achievements);
         await context.SaveChangesAsync();
     }
 }

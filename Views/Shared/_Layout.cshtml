@@ -22,10 +22,9 @@
             <span class="vibelang-title">VibeLang</span>
         </a>
         <!-- Navigation links -->
-        <a class="nav-link mx-2" asp-controller="Home" asp-action="Index">Dashboard</a>
         <a class="nav-link mx-2" asp-controller="Home" asp-action="Courses">Courses</a>
         <a class="nav-link mx-2" asp-controller="Home" asp-action="Leaderboard">Leaderboard</a>
-        <a class="nav-link mx-2 text-danger fw-bold" asp-controller="Admin" asp-action="Index">Admin</a>
+        <a class="nav-link mx-2" asp-controller="Home" asp-action="Achievements">Achievements</a>
         <!-- User info pushed to right side -->
         <div class="ms-auto">
             <partial name="_LoginPartial" />
@@ -38,8 +37,9 @@
     </main>
 
     <!-- Footer at bottom -->
-    <footer class="bg-light text-center py-2 mt-auto border-top">
-        &copy; 2026 - VibeLang
+    <footer class="bg-light text-center py-3 mt-auto border-top">
+        <div class="mb-2">&copy; 2026 - VibeLang</div>
+        <a class="nav-link text-danger fw-bold" asp-controller="Admin" asp-action="Index">Admin Panel</a>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

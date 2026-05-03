@@ -21,6 +21,7 @@ public class VibeLangDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<UserLessonProgress> UserLessonProgresses { get; set; }
     public DbSet<UserCourseStats> UserCourseStats { get; set; }
     public DbSet<Achievement> Achievements { get; set; }
+    public DbSet<UserAchievement> UserAchievements { get; set; }
 
     // Assessment
     public DbSet<Quiz> Quizzes { get; set; }
@@ -39,6 +40,7 @@ public class VibeLangDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<UserLessonProgress>().ToTable("UserLessonProgresses");
         modelBuilder.Entity<UserCourseStats>().ToTable("UserCourseStats");
         modelBuilder.Entity<Achievement>().ToTable("Achievements");
+        modelBuilder.Entity<UserAchievement>().ToTable("UserAchievements");
         modelBuilder.Entity<Quiz>().ToTable("Quizzes");
         modelBuilder.Entity<QuizQuestion>().ToTable("QuizQuestions");
         modelBuilder.Entity<QuizOption>().ToTable("QuizOptions");

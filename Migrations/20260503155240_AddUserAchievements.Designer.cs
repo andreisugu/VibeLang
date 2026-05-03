@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VibeLang.Models;
@@ -11,9 +12,11 @@ using VibeLang.Models;
 namespace VibeLang.Migrations
 {
     [DbContext(typeof(VibeLangDbContext))]
-    partial class VibeLangDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503155240_AddUserAchievements")]
+    partial class AddUserAchievements
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -457,9 +460,6 @@ namespace VibeLang.Migrations
 
                     b.Property<int>("CurrentStreak")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastActivityDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("TotalXP")
                         .HasColumnType("integer");

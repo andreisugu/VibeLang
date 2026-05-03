@@ -4,37 +4,227 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<h1 class="h4">Welcome back, @(ViewBag.FirstName)!</h1>
-<!-- row: grid container, col: auto-sized equal width columns, mt-4: top margin -->
-<div class="row mt-4">
-    <!-- Stats card -->
-    <div class="col">
-        <!-- card: content container, shadow-sm: subtle shadow, text-center: centered text -->
-        <div class="card text-center shadow-sm">
-            <div class="card-body">@(Model?.CurrentStreak ?? 0) days</div>
+<style>
+    .stat-card {
+        border: none;
+        border-radius: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+    }
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    .stat-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .streak-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    .progress-section {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .course-progress-card {
+        background: white;
+        border-left: 4px solid #667eea;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .course-progress-card:hover {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+    .quick-action-btn {
+        border-radius: 10px;
+        padding: 15px 20px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .achievement-badge {
+        display: inline-block;
+        font-size: 2rem;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Welcome Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">🎯 Welcome back, @(ViewBag.FirstName)!</h1>
+            <p class="text-muted small mt-2">Keep learning and earn more achievements!</p>
+        </div>
+        <div class="text-end">
+            @if (ViewBag.CurrentAchievementCount > 0)
+            {
+                <div class="streak-badge">🏆 @ViewBag.CurrentAchievementCount Achievement<span>@if(ViewBag.CurrentAchievementCount != 1) { <text>s</text> }</span> Unlocked</div>
+            }
         </div>
     </div>
-    <!-- Stats card -->
-    <div class="col">
-        <div class="card text-center shadow-sm">
-            <div class="card-body">@(Model?.TotalXP ?? 0) XP</div>
-        </div>
-    </div>
-    <!-- Button to resume last lesson -->
-    <div class="col">
-        @if (ViewBag.ContinueLesson != null)
-        {
-            var lesson = ViewBag.ContinueLesson as VibeLang.Models.Lesson;
-            <div class="card shadow-sm border-0 mb-2">
-                <div class="card-body py-2 px-3 small">
-                    <div class="text-muted fw-bold text-uppercase" style="font-size: 0.7rem;">Last Active:</div>
-                    <div class="text-primary truncate">@lesson?.Chapter?.Course?.Title</div>
-                    <div class="text-secondary truncate">@lesson?.Chapter?.Title</div>
-                    <div class="fw-bold truncate">@lesson?.Title</div>
+
+    <!-- Key Stats Grid -->
+    <div class="row g-3 mb-4">
+        <!-- XP Card -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card shadow-sm bg-primary bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="text-primary" style="font-size: 2rem;">⚡</div>
+                    <div class="stat-value text-primary">@(Model?.TotalXP ?? 0)</div>
+                    <div class="stat-label">Total XP</div>
+                    <small class="text-muted">Keep grinding!</small>
                 </div>
             </div>
-        }
-        <!-- w-100: full width, rounded-pill: rounded button -->
-        <a asp-controller="Home" asp-action="Lesson" asp-route-id="@ViewBag.LastLessonId" class="btn btn-primary rounded-pill w-100">Continue last lesson</a>
+        </div>
+
+        <!-- Streak Card -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card shadow-sm bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="text-warning" style="font-size: 2rem;">🔥</div>
+                    <div class="stat-value text-warning">@(Model?.CurrentStreak ?? 0)</div>
+                    <div class="stat-label">Day Streak</div>
+                    <small class="text-muted">@((Model?.CurrentStreak ?? 0) >= 7 ? "Amazing!" : "Keep it up!")</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lessons Completed Card -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card shadow-sm bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="text-success" style="font-size: 2rem;">📚</div>
+                    <div class="stat-value text-success">@(ViewBag.LessonsCompleted ?? 0)</div>
+                    <div class="stat-label">Lessons Done</div>
+                    <small class="text-muted">Great progress!</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Card -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card shadow-sm bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="text-info" style="font-size: 2rem;">🌟</div>
+                    <div class="stat-value text-info">@(ViewBag.CurrentLevel ?? 1)</div>
+                    <div class="stat-label">Level</div>
+                    <small class="text-muted">@(Math.Min((Model?.TotalXP ?? 0) % 500 + 100, 500)) / 500 XP</small>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            @if (ViewBag.ContinueLesson != null)
+            {
+                var lesson = ViewBag.ContinueLesson as VibeLang.Models.Lesson;
+                <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                        <div class="small text-white-50 mb-2">📍 CONTINUE LEARNING</div>
+                        <h5 class="mb-2 text-white">@lesson?.Chapter?.Course?.Title</h5>
+                        <p class="mb-3 small">
+                            <span class="text-white-50">@lesson?.Chapter?.Title</span> → 
+                            <span class="fw-bold">@lesson?.Title</span>
+                        </p>
+                        <a asp-controller="Home" asp-action="Lesson" asp-route-id="@ViewBag.LastLessonId" 
+                           class="btn btn-light btn-sm rounded-pill px-4">
+                            Start Now →
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                        <div class="small text-white-50 mb-2">🚀 START LEARNING</div>
+                        <h5 class="mb-3 text-white">Begin Your Journey</h5>
+                        <a asp-controller="Home" asp-action="Courses" class="btn btn-light btn-sm rounded-pill px-4">
+                            Explore Courses →
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-md-6">
+            <a href="/home/achievements" class="card shadow-sm border-0 h-100 text-decoration-none" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); transition: all 0.2s;">
+                <div class="card-body text-white">
+                    <div class="small text-white-50 mb-2">🏆 ACHIEVEMENTS</div>
+                    <h5 class="mb-2 text-white">@(ViewBag.CurrentAchievementCount ?? 0) of 6 Unlocked</h5>
+                    <div class="progress bg-white-50" style="height: 6px;">
+                        <div class="progress-bar bg-white" role="progressbar" 
+                             style="width: @((ViewBag.CurrentAchievementCount ?? 0) * 16.67)%"></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Course Progress Section -->
+    @if (ViewBag.CourseProgress != null && ViewBag.CourseProgress.Count > 0)
+    {
+        <div class="progress-section">
+            <h5 class="mb-3">
+                <span style="font-size: 1.3rem;">📊</span> Your Progress by Course
+            </h5>
+            @foreach (var course in ViewBag.CourseProgress)
+            {
+                <div class="course-progress-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">@course.CourseName</h6>
+                        <span class="badge bg-primary">@course.CompletedLessons/@course.TotalLessons</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: @((course.CompletedLessons / (double)course.TotalLessons) * 100)%;
+                                    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);">
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">@((course.CompletedLessons / (double)course.TotalLessons * 100).ToString("F0"))% Complete</small>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Recent Activity -->
+    @if (ViewBag.RecentActivity != null && ViewBag.RecentActivity.Count > 0)
+    {
+        <div class="mt-4">
+            <h5 class="mb-3">
+                <span style="font-size: 1.3rem;">⏱️</span> Recent Activity
+            </h5>
+            @foreach (var activity in ViewBag.RecentActivity)
+            {
+                <div class="alert alert-light border-start border-4" style="border-color: #667eea;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>@activity.LessonTitle</strong>
+                            <div class="small text-muted">@activity.ChapterTitle • @activity.CourseName</div>
+                            <div class="small text-muted">Score: <span class="text-success fw-bold">@activity.Score%</span></div>
+                        </div>
+                        <small class="text-muted">@activity.CompletionDate.ToString("MMM d")</small>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 </div>

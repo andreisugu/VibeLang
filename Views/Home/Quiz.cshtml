@@ -13,28 +13,80 @@
     {
         <div class="mb-2 text-muted small">Quiz: @Model.Title</div>
 
-        @foreach (var question in Model.Questions)
-        {
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <!-- Quiz question -->
-                    <h3 class="h5 mb-4">@question.QuestionText</h3>
-                    
-                    <!-- list-group: Bootstrap list of items, mb-3: bottom margin -->
-                    <div class="list-group mb-3">
-                        @foreach (var option in question.Options)
-                        {
-                            <!-- list-group-item-action: makes item interactive/hoverable -->
-                            <button type="button" class="list-group-item list-group-item-action">
-                                @option.OptionText
-                            </button>
-                        }
+        <form id="quiz-form" method="post" action="@Url.Action("SubmitQuiz", "Home")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="quizId" value="@Model.Id" />
+            
+            @foreach (var question in Model.Questions)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <!-- Quiz question -->
+                        <h3 class="h5 mb-4">@question.QuestionText</h3>
+                        
+                        <!-- list-group: Bootstrap list of items, mb-3: bottom margin -->
+                        <div class="list-group mb-3">
+                            @foreach (var option in question.Options)
+                            {
+                                <!-- Radio button for selecting answer -->
+                                <label class="list-group-item list-group-item-action">
+                                    <input type="radio" 
+                                           name="question_@question.Id" 
+                                           value="@option.Id" 
+                                           class="form-check-input me-2" 
+                                           required>
+                                    @option.OptionText
+                                </label>
+                            }
+                        </div>
                     </div>
                 </div>
-            </div>
-        }
-        
-        <!-- rounded-pill: button with curved edges -->
-        <button class="btn btn-primary rounded-pill">Submit Quiz</button>
+            }
+            
+            <!-- rounded-pill: button with curved edges -->
+            <button type="submit" class="btn btn-primary rounded-pill">Submit Quiz</button>
+        </form>
     }
 </main>
+
+<script>
+document.getElementById('quiz-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Collect answers
+    const formData = new FormData(this);
+    const answers = {};
+    
+    @foreach (var question in Model?.Questions ?? new List<VibeLang.Models.QuizQuestion>())
+    {
+        <text>
+        answers[@question.Id] = formData.get('question_@question.Id');
+        </text>
+    }
+    
+    try {
+        const response = await fetch('@Url.Action("SubmitQuiz", "Home")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({
+                quizId: @Model?.Id ?? 0,
+                answers: answers
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            alert(`Quiz submitted!\nScore: ${result.score}/${result.total}\nCorrect: ${result.correct}`);
+            window.location.href = '@Url.Action("Lesson", "Home")';
+        } else {
+            alert('Error submitting quiz: ' + (result.message || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to submit quiz');
+    }
+});
+</script>

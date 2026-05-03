@@ -1,19 +1,22 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VibeLang.Models;
 
-public class UserCourseStats
+public class UserAchievement
 {
     [Key]
     public int Id { get; set; }
+    
     public string UserId { get; set; } = string.Empty;
     [ForeignKey("UserId")]
     public ApplicationUser? User { get; set; }
-    public int CourseId { get; set; }
-    [ForeignKey("CourseId")]
-    public Course? Course { get; set; }
-    public int TotalXP { get; set; }
-    public int CurrentStreak { get; set; }
-    public DateTime? LastActivityDate { get; set; }
+    
+    public int AchievementId { get; set; }
+    [ForeignKey("AchievementId")]
+    public Achievement? Achievement { get; set; }
+    
+    [Required]
+    public DateTime EarnedDate { get; set; }
 }
