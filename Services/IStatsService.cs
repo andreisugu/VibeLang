@@ -8,4 +8,10 @@ public interface IStatsService
     Task UpdateUserStatsWithScoreAsync(string userId, int courseId, int score);
     Task<IEnumerable<UserCourseStats>> GetLeaderboardAsync();
     Task<int> GetUserRankAsync(string userId, int courseId);
+    
+    /// <summary>Get hours remaining before streak is lost for a stats object</summary>
+    int GetHoursUntilStreakLoss(UserCourseStats stats);
+    
+    /// <summary>Get user-friendly streak status message</summary>
+    string GetStreakStatusMessage(UserCourseStats stats);
 }

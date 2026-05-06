@@ -94,16 +94,61 @@
             </div>
         </div>
 
-        <!-- Streak Card -->
+        <!-- Streak Card (with streak status and urgency) -->
         <div class="col-md-3 col-sm-6">
-            <div class="card stat-card shadow-sm bg-warning bg-opacity-10">
-                <div class="card-body text-center">
-                    <div class="text-warning" style="font-size: 2rem;">🔥</div>
-                    <div class="stat-value text-warning">@(Model?.CurrentStreak ?? 0)</div>
-                    <div class="stat-label">Day Streak</div>
-                    <small class="text-muted">@((Model?.CurrentStreak ?? 0) >= 7 ? "Amazing!" : "Keep it up!")</small>
+            @{
+                bool streakBrokenToday = ViewBag.StreakBrokenToday ?? false;
+                int hoursRemaining = ViewBag.HoursUntilStreakLoss ?? 24;
+                int currentStreak = Model?.CurrentStreak ?? 0;
+                int maxStreak = ViewBag.MaxStreak ?? 0;
+                string statusMessage = ViewBag.StreakStatus ?? "No streak yet";
+            }
+            
+            @if (streakBrokenToday && currentStreak == 1)
+            {
+                <!-- Streak was broken - show warning -->
+                <div class="card stat-card shadow-sm" style="border: 2px solid #dc3545;">
+                    <div class="card-body text-center bg-danger bg-opacity-10">
+                        <div style="font-size: 2rem;">⚠️</div>
+                        <div class="stat-value text-danger">@currentStreak</div>
+                        <div class="stat-label">Day Streak</div>
+                        <small class="text-danger fw-bold">Streak broken! Start fresh today!</small>
+                    </div>
                 </div>
-            </div>
+            }
+            else if (hoursRemaining < 6)
+            {
+                <!-- Streak at risk - show urgency -->
+                <div class="card stat-card shadow-sm" style="border: 2px solid #ffc107;">
+                    <div class="card-body text-center bg-warning bg-opacity-20">
+                        <div style="font-size: 2rem;">⏰</div>
+                        <div class="stat-value text-warning">@currentStreak</div>
+                        <div class="stat-label">Day Streak</div>
+                        <small class="text-warning"><strong>@hoursRemaining hours left!</strong> Complete a lesson!</small>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Streak healthy -->
+                <div class="card stat-card shadow-sm bg-warning bg-opacity-10">
+                    <div class="card-body text-center">
+                        <div style="font-size: 2rem;">🔥</div>
+                        <div class="stat-value text-warning">@currentStreak</div>
+                        <div class="stat-label">Day Streak</div>
+                        <small class="text-muted">
+                            @if (maxStreak > 0)
+                            {
+                                <span>Best: @maxStreak days</span>
+                            }
+                            else
+                            {
+                                <span>Keep it up!</span>
+                            }
+                        </small>
+                    </div>
+                </div>
+            }
         </div>
 
         <!-- Lessons Completed Card -->

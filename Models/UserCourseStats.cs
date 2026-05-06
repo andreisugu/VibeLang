@@ -15,5 +15,7 @@ public class UserCourseStats
     public Course? Course { get; set; }
     public int TotalXP { get; set; }
     public int CurrentStreak { get; set; }
+    public int MaxStreakEver { get; set; } = 0;  // Historical best streak
     public DateTime? LastActivityDate { get; set; }
+    public bool StreakBrokenToday { get; set; } = false;  // Indicates if streak broke today
 }

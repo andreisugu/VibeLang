@@ -405,6 +405,15 @@ public class HomeController : Controller
                 .ToListAsync();
             ViewBag.RecentActivity = recentActivity;
 
+            // 8. Get streak status information
+            if (stats != null)
+            {
+                ViewBag.StreakStatus = _statsService.GetStreakStatusMessage(stats);
+                ViewBag.HoursUntilStreakLoss = _statsService.GetHoursUntilStreakLoss(stats);
+                ViewBag.MaxStreak = stats.MaxStreakEver;
+                ViewBag.StreakBrokenToday = stats.StreakBrokenToday;
+            }
+
             ViewBag.LastLessonId = lastLessonId;
             return View(stats);
         }
