@@ -35,8 +35,18 @@ public class VibeLangDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<Course>().ToTable("Courses");
         modelBuilder.Entity<Chapter>().ToTable("Chapters");
         modelBuilder.Entity<Lesson>().ToTable("Lessons");
-        modelBuilder.Entity<VocabularyWord>().ToTable("VocabularyWords");
-        modelBuilder.Entity<UserVocabulary>().ToTable("UserVocabularies");
+        
+        // VocabularyWord: unique constraint on (LessonId, Word) to prevent duplicates in lesson
+        modelBuilder.Entity<VocabularyWord>().ToTable("VocabularyWords")
+            .HasIndex(vw => new { vw.LessonId, vw.Word })
+            .IsUnique()
+            .HasDatabaseName("IX_VocabularyWords_LessonId_Word");
+        
+        // UserVocabulary: unique constraint on (UserId, WordId) to prevent duplicate user entries
+        modelBuilder.Entity<UserVocabulary>().ToTable("UserVocabularies")
+            .HasIndex(uv => new { uv.UserId, uv.WordId })
+            .IsUnique()
+            .HasDatabaseName("IX_UserVocabularies_UserId_WordId");
         modelBuilder.Entity<UserLessonProgress>().ToTable("UserLessonProgresses");
         modelBuilder.Entity<UserCourseStats>().ToTable("UserCourseStats");
         modelBuilder.Entity<Achievement>().ToTable("Achievements");

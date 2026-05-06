@@ -42,6 +42,7 @@ builder.Services.AddScoped<IUserAchievementRepository, UserAchievementRepository
 builder.Services.AddScoped<IUserVocabularyRepository, UserVocabularyRepository>();
 builder.Services.AddScoped<IVocabularyWordRepository, VocabularyWordRepository>();
 builder.Services.AddScoped<IStatsRepository, StatsRepository>();
+builder.Services.AddScoped<ILessonVocabularyRepository, LessonVocabularyRepository>();
 
 // Register Services
 builder.Services.AddScoped<ICourseService, CourseService>();
@@ -50,6 +51,7 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<IVocabularyService, VocabularyService>();
+builder.Services.AddScoped<ILessonVocabularyService, LessonVocabularyService>();
 builder.Services.AddScoped<IStatsService, StatsService>();
 
 var app = builder.Build();

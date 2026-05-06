@@ -18,9 +18,11 @@ public class HomeController : Controller
     private readonly IQuizService _quizService;
     private readonly IAchievementService _achievementService;
     private readonly IVocabularyService _vocabularyService;
+    private readonly ILessonVocabularyService _lessonVocabularyService;
 
     public HomeController(ILogger<HomeController> logger, VibeLangDbContext context, UserManager<ApplicationUser> userManager,
-        IStatsService statsService, IQuizService quizService, IAchievementService achievementService, IVocabularyService vocabularyService)
+        IStatsService statsService, IQuizService quizService, IAchievementService achievementService, 
+        IVocabularyService vocabularyService, ILessonVocabularyService lessonVocabularyService)
     {
         _logger = logger;
         _context = context;
@@ -29,6 +31,7 @@ public class HomeController : Controller
         _quizService = quizService;
         _achievementService = achievementService;
         _vocabularyService = vocabularyService;
+        _lessonVocabularyService = lessonVocabularyService;
     }
 
     public async Task<IActionResult> Leaderboard()
@@ -111,11 +114,30 @@ public class HomeController : Controller
 
         await _context.SaveChangesAsync();
         
-        // 3. Add words to User Vocabulary
-        await _vocabularyService.UpdateUserVocabularyAsync(user.Id, lesson.Id);
+        try
+        {
+            // 3. Sync vocabulary from lesson JSON (if not already synced)
+            await _lessonVocabularyService.SyncVocabularyAsync(lesson);
+            
+            // 4. Add words to User Vocabulary
+            await _vocabularyService.AssignLessonVocabularyToUserAsync(user.Id, lesson.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to sync vocabulary for user {user.Id}, lesson {lesson.Id}: {ex.Message}");
+            // Don't fail the entire operation - vocabulary is secondary to lesson completion
+        }
 
-        // 4. Check and award achievements
-        await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter!.CourseId, result.Score);
+        try
+        {
+            // 5. Check and award achievements
+            await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter!.CourseId, result.Score);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to check achievements for user {user.Id}: {ex.Message}");
+            // Don't fail the entire operation
+        }
 
         var updatedStats = await _statsService.GetOrCreateUserCourseStatsAsync(user.Id, lesson.Chapter!.CourseId);
 
@@ -166,11 +188,30 @@ public class HomeController : Controller
 
         await _context.SaveChangesAsync();
 
-        // Add words to User Vocabulary
-        await _vocabularyService.UpdateUserVocabularyAsync(user.Id, lesson.Id);
+        try
+        {
+            // Sync vocabulary from lesson JSON (if not already synced)
+            await _lessonVocabularyService.SyncVocabularyAsync(lesson);
 
-        // Check and award achievements
-        await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter!.CourseId, score);
+            // Add words to User Vocabulary
+            await _vocabularyService.AssignLessonVocabularyToUserAsync(user.Id, lesson.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to sync vocabulary for user {user.Id}, lesson {lesson.Id}: {ex.Message}");
+            // Don't fail the entire operation - vocabulary is secondary to quiz completion
+        }
+
+        try
+        {
+            // Check and award achievements
+            await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter!.CourseId, score);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to check achievements for user {user.Id}: {ex.Message}");
+            // Don't fail the entire operation
+        }
 
         var updatedStats = await _statsService.GetOrCreateUserCourseStatsAsync(user.Id, lesson.Chapter!.CourseId);
 

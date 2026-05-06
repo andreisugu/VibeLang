@@ -1,25 +1,25 @@
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using VibeLang.Models;
 using VibeLang.Repositories;
 
 namespace VibeLang.Services;
 
+/// <summary>
+/// Service for managing USER vocabulary (what they've learned).
+/// Does NOT handle lesson-level syncing - use LessonVocabularyService for that.
+/// Focuses on: assigning words, tracking status, statistics.
+/// </summary>
 public class VocabularyService : IVocabularyService
 {
     private readonly IUserVocabularyRepository _userVocabularyRepository;
     private readonly IVocabularyWordRepository _vocabularyWordRepository;
-    private readonly VibeLangDbContext _context;
     private readonly ILogger<VocabularyService> _logger;
 
     public VocabularyService(IUserVocabularyRepository userVocabularyRepository,
         IVocabularyWordRepository vocabularyWordRepository,
-        VibeLangDbContext context,
         ILogger<VocabularyService> logger)
     {
         _userVocabularyRepository = userVocabularyRepository;
         _vocabularyWordRepository = vocabularyWordRepository;
-        _context = context;
         _logger = logger;
     }
 
@@ -31,178 +31,69 @@ public class VocabularyService : IVocabularyService
     public async Task<Dictionary<int, string>> GetUserVocabularyProgressAsync(string userId)
     {
         var userVocabEntries = await _userVocabularyRepository.GetUserVocabulariesAsync(userId);
-        return userVocabEntries
+        
+        // Group by word content and take the best status (Mastered > Learned > New)
+        var progressMap = userVocabEntries
             .Where(uv => uv.Word != null)
-            .GroupBy(uv => uv.WordId)
-            .ToDictionary(g => g.Key, g => g.First().Status);
+            .GroupBy(uv => new { uv.Word!.Word, uv.Word.Translation })
+            .ToDictionary(
+                g => g.First().Word!.Id,  // Use first WordId as key
+                g => DetermineBestStatus(g.Select(uv => uv.Status))
+            );
+        
+        return progressMap;
     }
 
-    public async Task UpdateUserVocabularyAsync(string userId, int lessonId)
+    private string DetermineBestStatus(IEnumerable<string> statuses)
+    {
+        // Priority: Mastered > Learned > New
+        if (statuses.Contains("Mastered")) return "Mastered";
+        if (statuses.Contains("Learned")) return "Learned";
+        return "New";
+    }
+
+    public async Task<(int Total, int Learned, int Mastered)> GetUserVocabularyStatsAsync(string userId)
+    {
+        return await _userVocabularyRepository.GetUserVocabularyStatsAsync(userId);
+    }
+
+    public async Task UpdateWordStatusAsync(string userId, int wordId, string status)
+    {
+        await _userVocabularyRepository.UpdateVocabularyStatusAsync(userId, wordId, status);
+    }
+
+    public async Task RemoveWordAsync(string userId, int wordId)
+    {
+        await _userVocabularyRepository.RemoveFromUserVocabularyAsync(userId, wordId);
+    }
+
+    /// <summary>
+    /// Assign all lesson vocabulary words to user in ONE batch operation.
+    /// Efficient: single query to check existing, single bulk insert for new words.
+    /// Handles race conditions gracefully.
+    /// </summary>
+    public async Task AssignLessonVocabularyToUserAsync(string userId, int lessonId)
     {
         try
         {
-            var lesson = await _context.Lessons
-                .Include(l => l.VocabularyWords)
-                .FirstOrDefaultAsync(l => l.Id == lessonId);
-
-            if (lesson == null) return;
-
-            // 1. If VocabularyWords table is empty, try to sync from ContentJson
-            if (!lesson.VocabularyWords.Any() && !string.IsNullOrEmpty(lesson.ContentJson))
+            // Get all vocabulary words for this lesson
+            var lessonWords = await _vocabularyWordRepository.GetWordsByLessonAsync(lessonId);
+            if (!lessonWords.Any())
             {
-                await SyncVocabularyFromContentJsonAsync(lesson);
+                _logger.LogWarning($"No vocabulary words found for lesson {lessonId}");
+                return;
             }
 
-            // 2. Fetch all words (including newly synced ones)
-            var words = await _vocabularyWordRepository.GetWordsByLessonAsync(lessonId);
+            // Bulk assign words to user
+            var wordIds = lessonWords.Select(w => w.Id);
+            await _userVocabularyRepository.AssignWordsToUserAsync(userId, wordIds);
 
-            foreach (var word in words)
-            {
-                // Extra check to prevent duplicates
-                bool hasVocab = await _userVocabularyRepository.UserHasVocabularyAsync(userId, word.Id);
-                if (!hasVocab)
-                {
-                    await _userVocabularyRepository.AddAsync(new UserVocabulary
-                    {
-                        UserId = userId,
-                        WordId = word.Id,
-                        Status = "Learned",
-                        LastReviewed = DateTime.UtcNow
-                    });
-                }
-            }
+            _logger.LogInformation($"Assigned {lessonWords.Count()} vocabulary words from lesson {lessonId} to user {userId}");
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error updating user vocabulary: {ex.Message}");
-        }
-    }
-
-    private async Task SyncVocabularyFromContentJsonAsync(Lesson lesson)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(lesson.ContentJson!);
-            var root = doc.RootElement;
-
-            // 1. Sync from cuvinteInvatate
-            if (root.TryGetProperty("cuvinteInvatate", out var wordList) && wordList.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var wordEl in wordList.EnumerateArray())
-                {
-                    string? word = null;
-                    string? translation = null;
-
-                    if (wordEl.ValueKind == JsonValueKind.Object)
-                    {
-                        word = wordEl.TryGetProperty("word", out var w) ? w.GetString() : null;
-                        translation = wordEl.TryGetProperty("translation", out var t) ? t.GetString() : null;
-                    }
-                    else if (wordEl.ValueKind == JsonValueKind.String)
-                    {
-                        word = wordEl.GetString();
-                        translation = word;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(word) && !string.IsNullOrWhiteSpace(translation))
-                    {
-                        if (word.Length > 30) continue;
-
-                        bool exists = await _vocabularyWordRepository.WordExistsInLessonAsync(lesson.Id, word);
-                        if (!exists)
-                        {
-                            await _vocabularyWordRepository.AddAsync(new VocabularyWord
-                            {
-                                Word = word,
-                                Translation = translation,
-                                LessonId = lesson.Id
-                            });
-                        }
-                    }
-                }
-            }
-
-            // 2. Sync from teste
-            if (root.TryGetProperty("teste", out var tests) && tests.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var test in tests.EnumerateArray())
-                {
-                    int tip = test.TryGetProperty("tip", out var tipProp) ? tipProp.GetInt32() : 0;
-
-                    if (tip == 1 || tip == 2 || tip == 4)
-                    {
-                        string? ro = null;
-                        string? en = null;
-
-                        if (tip == 1)
-                        {
-                            ro = test.TryGetProperty("propozitie", out var p) ? p.GetString() : null;
-                            en = test.TryGetProperty("raspunsCorrect", out var r) ? r.GetString() : (test.TryGetProperty("raspunsCorect", out var r2) ? r2.GetString() : null);
-                        }
-                        else if (tip == 2)
-                        {
-                            en = test.TryGetProperty("propozitie", out var p) ? p.GetString() : null;
-                            ro = test.TryGetProperty("raspunsCorrect", out var r) ? r.GetString() : (test.TryGetProperty("raspunsCorect", out var r2) ? r2.GetString() : null);
-                        }
-                        else if (tip == 4)
-                        {
-                            ro = test.TryGetProperty("propozitie", out var p) ? p.GetString() : null;
-                            en = ro;
-                        }
-
-                        if (!string.IsNullOrEmpty(ro) && !string.IsNullOrEmpty(en))
-                        {
-                            if (ro.Length > 30) continue;
-
-                            bool exists = await _vocabularyWordRepository.WordExistsInLessonAsync(lesson.Id, ro);
-                            if (!exists)
-                            {
-                                await _vocabularyWordRepository.AddAsync(new VocabularyWord
-                                {
-                                    Word = ro,
-                                    Translation = en,
-                                    LessonId = lesson.Id
-                                });
-                            }
-                        }
-                    }
-                    else if (tip == 3)
-                    {
-                        if (test.TryGetProperty("leftWords", out var leftProp) && leftProp.ValueKind == JsonValueKind.Array &&
-                            test.TryGetProperty("rightWords", out var rightProp) && rightProp.ValueKind == JsonValueKind.Array)
-                        {
-                            var left = leftProp.EnumerateArray().ToList();
-                            var right = rightProp.EnumerateArray().ToList();
-
-                            for (int i = 0; i < Math.Min(left.Count, right.Count); i++)
-                            {
-                                var lWord = left[i].GetString();
-                                var rWord = right[i].GetString();
-
-                                if (!string.IsNullOrEmpty(lWord) && !string.IsNullOrEmpty(rWord))
-                                {
-                                    if (lWord.Length > 30) continue;
-
-                                    bool exists = await _vocabularyWordRepository.WordExistsInLessonAsync(lesson.Id, lWord);
-                                    if (!exists)
-                                    {
-                                        await _vocabularyWordRepository.AddAsync(new VocabularyWord
-                                        {
-                                            Word = lWord,
-                                            Translation = rWord,
-                                            LessonId = lesson.Id
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning($"Failed to sync vocabulary from JSON for lesson {lesson.Id}: {ex.Message}");
+            _logger.LogError($"Error assigning vocabulary for user {userId}, lesson {lessonId}: {ex.Message}");
+            throw;
         }
     }
 }
