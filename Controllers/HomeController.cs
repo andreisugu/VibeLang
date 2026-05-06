@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using VibeLang.Models;
 using Microsoft.AspNetCore.Authorization;
+using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
@@ -13,23 +14,26 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly VibeLangDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IStatsService _statsService;
+    private readonly IQuizService _quizService;
+    private readonly IAchievementService _achievementService;
+    private readonly IVocabularyService _vocabularyService;
 
-    public HomeController(ILogger<HomeController> logger, VibeLangDbContext context, UserManager<ApplicationUser> userManager)
+    public HomeController(ILogger<HomeController> logger, VibeLangDbContext context, UserManager<ApplicationUser> userManager,
+        IStatsService statsService, IQuizService quizService, IAchievementService achievementService, IVocabularyService vocabularyService)
     {
         _logger = logger;
         _context = context;
         _userManager = userManager;
+        _statsService = statsService;
+        _quizService = quizService;
+        _achievementService = achievementService;
+        _vocabularyService = vocabularyService;
     }
 
     public async Task<IActionResult> Leaderboard()
     {
-        // Fetch top stats, including the Course and User name for the leaderboard
-        var stats = await _context.UserCourseStats
-            .Include(s => s.Course)
-            .Include(s => s.User)
-            .OrderByDescending(s => s.TotalXP)
-            .Take(10)
-            .ToListAsync();
+        var stats = await _statsService.GetLeaderboardAsync();
         return View(stats);
     }
 
@@ -101,53 +105,21 @@ public class HomeController : Controller
             progress.CompletionDate = DateTime.UtcNow;
         }
 
-        // 2. Update Course Stats (XP and Streak)
-        var stats = await _context.UserCourseStats
-            .FirstOrDefaultAsync(s => s.UserId == user.Id && s.CourseId == lesson.Chapter!.CourseId);
-        
-        if (stats == null)
-        {
-            stats = new UserCourseStats
-            {
-                UserId = user.Id,
-                CourseId = lesson.Chapter!.CourseId,
-                TotalXP = result.Score,
-                CurrentStreak = 1,
-                LastActivityDate = DateTime.UtcNow
-            };
-            _context.UserCourseStats.Add(stats);
-        }
-        else
-        {
-            stats.TotalXP += result.Score;
-            
-            // Streak logic
-            var today = DateTime.UtcNow.Date;
-            var lastDate = stats.LastActivityDate?.Date;
-
-            if (lastDate != today)
-            {
-                if (lastDate == today.AddDays(-1))
-                {
-                    stats.CurrentStreak++; // consecutive day
-                }
-                else
-                {
-                    stats.CurrentStreak = 1; // broke the streak
-                }
-                stats.LastActivityDate = DateTime.UtcNow;
-            }
-        }
+        // 2. Update Course Stats using stats service
+        int xpGained = result.Score;
+        await _statsService.UpdateUserStatsWithScoreAsync(user.Id, lesson.Chapter!.CourseId, xpGained);
 
         await _context.SaveChangesAsync();
         
         // 3. Add words to User Vocabulary
-        await UpdateUserVocabulary(user.Id, lesson.Id);
+        await _vocabularyService.UpdateUserVocabularyAsync(user.Id, lesson.Id);
 
         // 4. Check and award achievements
-        await CheckAndAwardAchievements(user.Id, lesson.Id, lesson.Chapter!.CourseId, result.Score);
+        await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter!.CourseId, result.Score);
 
-        return Json(new { success = true, xpAdded = result.Score, totalXP = stats.TotalXP });
+        var updatedStats = await _statsService.GetOrCreateUserCourseStatsAsync(user.Id, lesson.Chapter!.CourseId);
+
+        return Json(new { success = true, xpAdded = xpGained, totalXP = updatedStats.TotalXP });
     }
 
     [HttpPost]
@@ -158,34 +130,11 @@ public class HomeController : Controller
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
 
-        var quiz = await _context.Quizzes
-            .Include(q => q.Questions)
-            .ThenInclude(q => q.Options)
-            .Include(q => q.Lesson)
-            .ThenInclude(l => l.Chapter)
-            .FirstOrDefaultAsync(q => q.Id == submission.QuizId);
-        
+        var quiz = await _quizService.GetQuizWithQuestionsAsync(submission.QuizId);
         if (quiz == null) return NotFound();
 
-        // Calculate score
-        int correct = 0;
-        int total = quiz.Questions.Count;
-
-        foreach (var question in quiz.Questions)
-        {
-            if (submission.Answers.TryGetValue(question.Id.ToString(), out var selectedOptionIdStr) &&
-                int.TryParse(selectedOptionIdStr, out var selectedOptionId))
-            {
-                var selectedOption = question.Options.FirstOrDefault(o => o.Id == selectedOptionId);
-                if (selectedOption?.IsCorrect ?? false)
-                {
-                    correct++;
-                }
-            }
-        }
-
-        // Calculate percentage score (0-100)
-        int score = total > 0 ? (correct * 100) / total : 0;
+        // Calculate score using quiz service
+        var (correct, total, score) = await _quizService.CalculateQuizScoreAsync(submission.QuizId, submission.Answers);
 
         // Update User Lesson Progress
         var lesson = quiz.Lesson;
@@ -211,53 +160,19 @@ public class HomeController : Controller
             progress.CompletionDate = DateTime.UtcNow;
         }
 
-        // Update Course Stats
-        var stats = await _context.UserCourseStats
-            .FirstOrDefaultAsync(s => s.UserId == user.Id && s.CourseId == lesson.Chapter!.CourseId);
-        
-        int xpGained = score; // Award XP equal to score percentage
-        
-        if (stats == null)
-        {
-            stats = new UserCourseStats
-            {
-                UserId = user.Id,
-                CourseId = lesson.Chapter!.CourseId,
-                TotalXP = xpGained,
-                CurrentStreak = 1,
-                LastActivityDate = DateTime.UtcNow
-            };
-            _context.UserCourseStats.Add(stats);
-        }
-        else
-        {
-            stats.TotalXP += xpGained;
-            
-            // Streak logic
-            var today = DateTime.UtcNow.Date;
-            var lastDate = stats.LastActivityDate?.Date;
-
-            if (lastDate != today)
-            {
-                if (lastDate == today.AddDays(-1))
-                {
-                    stats.CurrentStreak++; // consecutive day
-                }
-                else
-                {
-                    stats.CurrentStreak = 1; // broke the streak
-                }
-                stats.LastActivityDate = DateTime.UtcNow;
-            }
-        }
+        // Update Course Stats using stats service
+        int xpGained = score;
+        await _statsService.UpdateUserStatsWithScoreAsync(user.Id, lesson.Chapter!.CourseId, xpGained);
 
         await _context.SaveChangesAsync();
 
         // Add words to User Vocabulary
-        await UpdateUserVocabulary(user.Id, lesson.Id);
+        await _vocabularyService.UpdateUserVocabularyAsync(user.Id, lesson.Id);
 
         // Check and award achievements
-        await CheckAndAwardAchievements(user.Id, lesson.Id, lesson.Chapter!.CourseId, score);
+        await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter!.CourseId, score);
+
+        var updatedStats = await _statsService.GetOrCreateUserCourseStatsAsync(user.Id, lesson.Chapter!.CourseId);
 
         return Json(new { 
             success = true, 
@@ -266,7 +181,7 @@ public class HomeController : Controller
             correct = correct,
             percentage = score,
             xpAdded = xpGained,
-            totalXP = stats.TotalXP
+            totalXP = updatedStats.TotalXP
         });
     }
 
@@ -291,23 +206,8 @@ public class HomeController : Controller
 
         if (user != null)
         {
-            // Source of truth: what THIS user has in their vocabulary
-            var userVocabEntries = await _context.UserVocabularies
-                .Where(uv => uv.UserId == user.Id)
-                .Include(uv => uv.Word)
-                    .ThenInclude(w => w!.Lesson)
-                        .ThenInclude(l => l!.Chapter)
-                .ToListAsync();
-
-            words = userVocabEntries
-                .Where(uv => uv.Word != null)
-                .Select(uv => uv.Word!)
-                .ToList();
-
-            userProgress = userVocabEntries
-                .Where(uv => uv.Word != null)
-                .GroupBy(uv => uv.WordId)
-                .ToDictionary(g => g.Key, g => g.First().Status);
+            words = (await _vocabularyService.GetUserVocabularyAsync(user.Id)).ToList();
+            userProgress = await _vocabularyService.GetUserVocabularyProgressAsync(user.Id);
         }
 
         var courses = await _context.Courses.ToListAsync();
@@ -400,7 +300,7 @@ public class HomeController : Controller
                     .FirstOrDefaultAsync(l => l.Id == lastLessonId);
             }
 
-            // 2. Show the user's overall stats on the dashboard
+            // 2. Show the user's overall stats on the dashboard (get first stats as aggregate)
             var stats = await _context.UserCourseStats
                 .Where(s => s.UserId == user.Id)
                 .OrderByDescending(s => s.TotalXP)
@@ -415,10 +315,8 @@ public class HomeController : Controller
             // 4. Calculate user level (1 level per 500 XP)
             ViewBag.CurrentLevel = Math.Max(1, ((stats?.TotalXP ?? 0) / 500) + 1);
 
-            // 5. Get achievements count
-            var achievementCount = await _context.UserAchievements
-                .Where(ua => ua.UserId == user.Id)
-                .CountAsync();
+            // 5. Get achievements count using service
+            var achievementCount = await _achievementService.GetUserAchievementCountAsync(user.Id);
             ViewBag.CurrentAchievementCount = achievementCount;
 
             // 6. Get course progress for each course
@@ -540,7 +438,7 @@ public class HomeController : Controller
         
         if (user != null)
         {
-            await CheckAchievementsForAllCompletedLessons(user.Id);
+            await _achievementService.CheckAchievementsForAllCompletedLessonsAsync(user.Id);
         }
         
         var allAchievements = await _context.Achievements.ToListAsync();
@@ -548,9 +446,7 @@ public class HomeController : Controller
         
         if (user != null)
         {
-            earnedAchievements = await _context.UserAchievements
-                .Where(ua => ua.UserId == user.Id)
-                .ToDictionaryAsync(ua => ua.AchievementId, ua => ua.EarnedDate);
+            earnedAchievements = await _achievementService.GetUserAchievementsAsync(user.Id);
         }
 
         ViewBag.AllAchievements = allAchievements;
@@ -615,372 +511,6 @@ public class HomeController : Controller
         
         ViewBag.AchievementProgress = progressData;
         return View(allAchievements);
-    }
-
-    private async Task UpdateUserVocabulary(string userId, int lessonId)
-    {
-        try
-        {
-            var lesson = await _context.Lessons
-                .Include(l => l.VocabularyWords)
-                .FirstOrDefaultAsync(l => l.Id == lessonId);
-
-            if (lesson == null) return;
-
-            // 1. If VocabularyWords table is empty, try to sync from ContentJson
-            if (!lesson.VocabularyWords.Any() && !string.IsNullOrEmpty(lesson.ContentJson))
-            {
-                await SyncVocabularyFromContentJson(lesson);
-            }
-
-            // 2. Fetch all words (including newly synced ones)
-            var words = await _context.VocabularyWords
-                .Where(w => w.LessonId == lessonId)
-                .ToListAsync();
-
-            foreach (var word in words)
-            {
-                // Extra check to prevent duplicates even if the table has dirty data
-                var existing = await _context.UserVocabularies
-                    .AnyAsync(uv => uv.UserId == userId && uv.WordId == word.Id);
-
-                if (!existing)
-                {
-                    _context.UserVocabularies.Add(new UserVocabulary
-                    {
-                        UserId = userId,
-                        WordId = word.Id,
-                        Status = "Learned",
-                        LastReviewed = DateTime.UtcNow
-                    });
-                }
-            }
-
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error updating user vocabulary: {ex.Message}");
-        }
-    }
-
-    private async Task SyncVocabularyFromContentJson(Lesson lesson)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(lesson.ContentJson!);
-            var root = doc.RootElement;
-
-            // 1. Sync from cuvinteInvatate (Option A: Support for {word, translation} objects)
-            if (root.TryGetProperty("cuvinteInvatate", out var wordList) && wordList.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var wordEl in wordList.EnumerateArray())
-                {
-                    string? word = null;
-                    string? translation = null;
-
-                    if (wordEl.ValueKind == JsonValueKind.Object)
-                    {
-                        word = wordEl.TryGetProperty("word", out var w) ? w.GetString() : null;
-                        translation = wordEl.TryGetProperty("translation", out var t) ? t.GetString() : null;
-                    }
-                    else if (wordEl.ValueKind == JsonValueKind.String)
-                    {
-                        word = wordEl.GetString();
-                        translation = word; // Fallback
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(word) && !string.IsNullOrWhiteSpace(translation))
-                    {
-                        // Character length guard: Skip sentences, only keep words/short phrases
-                        if (word.Length > 30) continue;
-
-                        var exists = await _context.VocabularyWords.AnyAsync(vw => vw.LessonId == lesson.Id && vw.Word == word);
-                        if (!exists)
-                        {
-                            _context.VocabularyWords.Add(new VocabularyWord
-                            {
-                                Word = word,
-                                Translation = translation,
-                                LessonId = lesson.Id
-                            });
-                        }
-                    }
-                }
-            }
-
-            // 2. Sync from teste (interactive content)
-            if (root.TryGetProperty("teste", out var tests) && tests.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var test in tests.EnumerateArray())
-                {
-                    int tip = test.TryGetProperty("tip", out var tipProp) ? tipProp.GetInt32() : 0;
-                    
-                    if (tip == 1 || tip == 2 || tip == 4)
-                    {
-                        string? ro = null;
-                        string? en = null;
-
-                        if (tip == 1) // RO -> EN
-                        {
-                            ro = test.TryGetProperty("propozitie", out var p) ? p.GetString() : null;
-                            en = test.TryGetProperty("raspunsCorrect", out var r) ? r.GetString() : (test.TryGetProperty("raspunsCorect", out var r2) ? r2.GetString() : null);
-                        }
-                        else if (tip == 2) // EN -> RO
-                        {
-                            en = test.TryGetProperty("propozitie", out var p) ? p.GetString() : null;
-                            ro = test.TryGetProperty("raspunsCorrect", out var r) ? r.GetString() : (test.TryGetProperty("raspunsCorect", out var r2) ? r2.GetString() : null);
-                        }
-                        else if (tip == 4) // Context Info
-                        {
-                            ro = test.TryGetProperty("propozitie", out var p) ? p.GetString() : null;
-                            en = ro;
-                        }
-
-                        if (!string.IsNullOrEmpty(ro) && !string.IsNullOrEmpty(en))
-                        {
-                            // Character length guard: Skip sentences
-                            if (ro.Length > 30) continue;
-
-                            var exists = await _context.VocabularyWords.AnyAsync(vw => vw.LessonId == lesson.Id && vw.Word == ro);
-                            if (!exists)
-                            {
-                                _context.VocabularyWords.Add(new VocabularyWord
-                                {
-                                    Word = ro,
-                                    Translation = en,
-                                    LessonId = lesson.Id
-                                });
-                            }
-                        }
-                    }
-                    else if (tip == 3) // Matching Pairs
-                    {
-                        if (test.TryGetProperty("leftWords", out var leftProp) && leftProp.ValueKind == JsonValueKind.Array &&
-                            test.TryGetProperty("rightWords", out var rightProp) && rightProp.ValueKind == JsonValueKind.Array)
-                        {
-                            var left = leftProp.EnumerateArray().ToList();
-                            var right = rightProp.EnumerateArray().ToList();
-
-                            for (int i = 0; i < Math.Min(left.Count, right.Count); i++)
-                            {
-                                var lWord = left[i].GetString();
-                                var rWord = right[i].GetString();
-                                
-                                if (!string.IsNullOrEmpty(lWord) && !string.IsNullOrEmpty(rWord))
-                                {
-                                    // Character length guard
-                                    if (lWord.Length > 30) continue;
-
-                                    var exists = await _context.VocabularyWords.AnyAsync(vw => vw.LessonId == lesson.Id && vw.Word == lWord);
-                                    if (!exists)
-                                    {
-                                        _context.VocabularyWords.Add(new VocabularyWord
-                                        {
-                                            Word = lWord,
-                                            Translation = rWord,
-                                            LessonId = lesson.Id
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning($"Failed to sync vocabulary from JSON for lesson {lesson.Id}: {ex.Message}");
-        }
-    }
-
-    private async Task CheckAndAwardAchievements(string userId, int lessonId, int courseId, int score)
-    {
-        try
-        {
-            // 1. Beginner's Start - First lesson completed
-            var totalLessonsCompleted = await _context.UserLessonProgresses
-                .Where(ulp => ulp.UserId == userId && ulp.IsCompleted)
-                .CountAsync();
-
-            if (totalLessonsCompleted >= 1)
-            {
-                await AwardAchievementIfNotEarned(userId, "Beginner's Start");
-            }
-
-            // 2. Perfect Score - 100% on a quiz
-            if (score == 100)
-            {
-                await AwardAchievementIfNotEarned(userId, "Perfect Score");
-            }
-
-            // 3. Expert Learner - Completed all lessons in a course
-            var totalLessonsInCourse = await _context.Lessons
-                .Where(l => l.Chapter!.CourseId == courseId)
-                .CountAsync();
-
-            var completedLessonsInCourse = await _context.UserLessonProgresses
-                .Where(ulp => ulp.UserId == userId && ulp.IsCompleted && 
-                       ulp.Lesson!.Chapter!.CourseId == courseId)
-                .CountAsync();
-
-            if (totalLessonsInCourse > 0 && completedLessonsInCourse == totalLessonsInCourse)
-            {
-                await AwardAchievementIfNotEarned(userId, "Expert Learner");
-            }
-
-            // 4. Speed Learner - Complete 5 lessons in one day
-            var today = DateTime.UtcNow.Date;
-            var lessonsToday = await _context.UserLessonProgresses
-                .Where(ulp => ulp.UserId == userId && ulp.IsCompleted && ulp.CompletionDate >= today)
-                .CountAsync();
-
-            if (lessonsToday >= 5)
-            {
-                await AwardAchievementIfNotEarned(userId, "Speed Learner");
-            }
-
-            // 5. Marathon Runner - Maintain a 7-day streak on ANY course
-            var maxStreak = await _context.UserCourseStats
-                .Where(s => s.UserId == userId)
-                .MaxAsync(s => (int?)s.CurrentStreak) ?? 0;
-            
-            if (maxStreak >= 7)
-            {
-                await AwardAchievementIfNotEarned(userId, "Marathon Runner");
-            }
-
-            // 6. Social Butterfly - Reach the top 10 on the leaderboard
-            var userXP = await _context.UserCourseStats
-                .Where(s => s.UserId == userId && s.CourseId == courseId)
-                .Select(s => s.TotalXP)
-                .FirstOrDefaultAsync();
-
-            var usersAbove = await _context.UserCourseStats
-                .Where(s => s.CourseId == courseId && s.TotalXP > userXP)
-                .CountAsync();
-
-            if (usersAbove < 10) // rank = usersAbove + 1, so rank <= 10 means usersAbove <= 9
-            {
-                await AwardAchievementIfNotEarned(userId, "Social Butterfly");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error checking achievements: {ex.Message}");
-        }
-    }
-
-    private async Task AwardAchievementIfNotEarned(string userId, string achievementTitle)
-    {
-        // Find the achievement by title
-        var achievement = await _context.Achievements
-            .FirstOrDefaultAsync(a => a.Title == achievementTitle);
-
-        if (achievement == null) return;
-
-        // Check if user already earned this achievement
-        var alreadyEarned = await _context.UserAchievements
-            .AnyAsync(ua => ua.UserId == userId && ua.AchievementId == achievement.Id);
-
-        if (!alreadyEarned)
-        {
-            var userAchievement = new UserAchievement
-            {
-                UserId = userId,
-                AchievementId = achievement.Id,
-                EarnedDate = DateTime.UtcNow
-            };
-            _context.UserAchievements.Add(userAchievement);
-            await _context.SaveChangesAsync();
-        }
-    }
-
-    private async Task CheckAchievementsForAllCompletedLessons(string userId)
-    {
-        try
-        {
-            var completedLessons = await _context.UserLessonProgresses
-                .Where(ulp => ulp.UserId == userId && ulp.IsCompleted)
-                .Include(ulp => ulp.Lesson).ThenInclude(l => l!.Chapter)
-                .ToListAsync();
-
-            if (!completedLessons.Any()) return;
-
-            // 1. Beginner's Start
-            await AwardAchievementIfNotEarned(userId, "Beginner's Start");
-
-            // 2. Perfect Score
-            if (completedLessons.Any(ul => ul.ScoreAchieved == 100))
-            {
-                await AwardAchievementIfNotEarned(userId, "Perfect Score");
-            }
-
-            // 3. Expert Learner
-            var courseIds = completedLessons
-                .Where(ul => ul.Lesson?.Chapter != null)
-                .Select(ul => ul.Lesson!.Chapter!.CourseId)
-                .Distinct();
-
-            foreach (var courseId in courseIds)
-            {
-                var totalInCourse = await _context.Lessons
-                    .Where(l => l.Chapter!.CourseId == courseId).CountAsync();
-                
-                var completedInCourse = completedLessons
-                    .Count(ul => ul.Lesson?.Chapter?.CourseId == courseId);
-
-                if (totalInCourse > 0 && completedInCourse == totalInCourse)
-                {
-                    await AwardAchievementIfNotEarned(userId, "Expert Learner");
-                    break;
-                }
-            }
-
-            // 4. Speed Learner - check if any single day has 5+ completions
-            var lessonsByDay = completedLessons
-                .GroupBy(ul => ul.CompletionDate.Date)
-                .Any(g => g.Count() >= 5);
-
-            if (lessonsByDay)
-            {
-                await AwardAchievementIfNotEarned(userId, "Speed Learner");
-            }
-
-            // 5. Marathon Runner
-            var maxStreak = await _context.UserCourseStats
-                .Where(s => s.UserId == userId)
-                .MaxAsync(s => (int?)s.CurrentStreak) ?? 0;
-
-            if (maxStreak >= 7)
-            {
-                await AwardAchievementIfNotEarned(userId, "Marathon Runner");
-            }
-
-            // 6. Social Butterfly - check best rank across all courses
-            var allUserStats = await _context.UserCourseStats
-                .Where(s => s.UserId == userId)
-                .ToListAsync();
-
-            foreach (var stat in allUserStats)
-            {
-                var usersAbove = await _context.UserCourseStats
-                    .Where(s => s.CourseId == stat.CourseId && s.TotalXP > stat.TotalXP)
-                    .CountAsync();
-
-                if (usersAbove < 10)
-                {
-                    await AwardAchievementIfNotEarned(userId, "Social Butterfly");
-                    break;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error checking achievements for all lessons: {ex.Message}");
-        }
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
