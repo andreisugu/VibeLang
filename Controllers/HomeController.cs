@@ -251,17 +251,6 @@ public class HomeController : Controller
             userProgress = await _vocabularyService.GetUserVocabularyProgressAsync(user.Id);
         }
 
-        var courses = await _context.Courses.ToListAsync();
-        ViewBag.Courses = courses;
-
-        var lessonCourseMap = new Dictionary<int, int>();
-        foreach (var word in words)
-        {
-            if (word.Lesson?.Chapter != null && !lessonCourseMap.ContainsKey(word.LessonId))
-                lessonCourseMap[word.LessonId] = word.Lesson.Chapter.CourseId;
-        }
-
-        ViewBag.LessonCourseMap = lessonCourseMap;
         ViewBag.UserProgress = userProgress;
 
         return View(words);
