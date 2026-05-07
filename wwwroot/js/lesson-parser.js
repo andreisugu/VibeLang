@@ -363,7 +363,7 @@ class LessonParser {
         // Submit to server
         const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
         try {
-            const response = await fetch('/home/submitresult', {
+            const response = await fetch('/api/lessonresult/submit-lesson', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

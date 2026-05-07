@@ -1,0 +1,185 @@
+@{
+    ViewData["Title"] = "Achievements";
+    var allAchievements = ViewBag.AllAchievements as List<VibeLang.Models.Achievement> ?? new List<VibeLang.Models.Achievement>();
+    var earnedIds = ViewBag.EarnedAchievementIds as HashSet<int> ?? new HashSet<int>();
+    var earnedAchievements = ViewBag.EarnedAchievements as Dictionary<int, DateTime> ?? new Dictionary<int, DateTime>();
+    int totalEarned = ViewBag.TotalEarned ?? 0;
+    int totalAvailable = ViewBag.TotalAvailable ?? 0;
+}
+
+<div class="container py-5">
+    <h1 class="mb-2">@ViewData["Title"]</h1>
+    
+    <!-- Progress Summary -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="text-primary display-4">@totalEarned</h2>
+                    <p class="text-muted mb-0">Achievements Earned</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="text-info display-4">@totalAvailable</h2>
+                    <p class="text-muted mb-0">Total Available</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body p-4">
+                    @{
+                        int percentage = totalAvailable > 0 ? (totalEarned * 100) / totalAvailable : 0;
+                    }
+                    <h2 class="text-success display-4">@percentage%</h2>
+                    <p class="text-muted mb-0">Completion</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Progress Bar -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="fw-bold">Achievement Progress</span>
+            <span class="text-muted">@totalEarned / @totalAvailable</span>
+        </div>
+        <div class="progress" style="height: 25px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: @percentage%;" aria-valuenow="@totalEarned" aria-valuemin="0" aria-valuemax="@totalAvailable">
+                @percentage%
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements Grid -->
+    <h3 class="mb-4">All Achievements</h3>
+    <div class="row g-4">
+        @foreach (var achievement in allAchievements)
+        {
+            bool isEarned = earnedIds.Contains(achievement.Id);
+            var earnedDate = isEarned && earnedAchievements.ContainsKey(achievement.Id) 
+                ? earnedAchievements[achievement.Id] 
+                : (DateTime?)null;
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 @(isEarned ? "border-success" : "opacity-75")">
+                    <div class="card-body text-center">
+                        <!-- Badge Icon -->
+                        <div class="mb-3">
+                            @if (isEarned)
+                            {
+                                <div class="display-1">
+                                    @if (achievement.Title.Contains("Beginner"))
+                                    {
+                                        <span>🎯</span>
+                                    }
+                                    else if (achievement.Title.Contains("Expert"))
+                                    {
+                                        <span>⭐</span>
+                                    }
+                                    else if (achievement.Title.Contains("Speed"))
+                                    {
+                                        <span>⚡</span>
+                                    }
+                                    else if (achievement.Title.Contains("Perfect"))
+                                    {
+                                        <span>💯</span>
+                                    }
+                                    else if (achievement.Title.Contains("Marathon"))
+                                    {
+                                        <span>🏃</span>
+                                    }
+                                    else if (achievement.Title.Contains("Social"))
+                                    {
+                                        <span>👥</span>
+                                    }
+                                    else
+                                    {
+                                        <span>🏆</span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="display-1 text-muted">🔒</div>
+                            }
+                        </div>
+
+                        <!-- Achievement Name -->
+                        <h5 class="card-title fw-bold">@achievement.Title</h5>
+                        <p class="card-text text-muted small">@achievement.Description</p>
+
+                        <!-- Status Badge -->
+                        @if (isEarned)
+                        {
+                            <span class="badge bg-success mb-3">✓ Earned</span>
+                            @if (earnedDate.HasValue)
+                            {
+                                <p class="text-muted small mb-0">
+                                    Earned on @earnedDate.Value.ToString("MMM dd, yyyy")
+                                </p>
+                            }
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary mb-3">Locked</span>
+                            
+                            var progressDict = ViewBag.AchievementProgress as Dictionary<string, dynamic>;
+                            if (progressDict != null && progressDict.ContainsKey(achievement.Title))
+                            {
+                                var prog = progressDict[achievement.Title];
+                                int percent = (int)((double)prog.Current / prog.Target * 100);
+                                
+                                <div class="mt-2">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">@prog.Text</small>
+                                        <small class="text-muted">@percent%</small>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-info" role="progressbar" 
+                                             style="width: @percent%" aria-valuenow="@percent" 
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted small mb-0">Complete more lessons to unlock</p>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!allAchievements.Any())
+    {
+        <div class="alert alert-info text-center" role="alert">
+            No achievements available yet. Check back soon!
+        </div>
+    }
+</div>
+
+<style>
+    .opacity-75 {
+        opacity: 0.75;
+    }
+    
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .border-success {
+        border: 2px solid #198754 !important;
+        box-shadow: 0 0 10px rgba(25, 135, 84, 0.1);
+    }
+</style>
