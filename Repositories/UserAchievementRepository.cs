@@ -39,7 +39,7 @@ public class UserAchievementRepository : Repository<UserAchievement>, IUserAchie
     public async Task<UserAchievement?> GetUserAchievementByTitleAsync(string userId, string achievementTitle)
     {
         return await _context.UserAchievements
-            .Where(ua => ua.UserId == userId && ua.Achievement.Title == achievementTitle)
+            .Where(ua => ua.UserId == userId && ua.Achievement != null && ua.Achievement.Title == achievementTitle)
             .FirstOrDefaultAsync();
     }
 }

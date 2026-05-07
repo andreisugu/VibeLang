@@ -47,6 +47,8 @@ public class LessonResultController : ControllerBase
             .FirstOrDefaultAsync(l => l.Id == result.LessonId);
         
         if (lesson == null) return NotFound();
+        if (lesson.Chapter == null) return BadRequest("Lesson has no associated chapter");
+
 
         // 1. Update Lesson Progress
         var progress = await _context.UserLessonProgresses
@@ -73,7 +75,7 @@ public class LessonResultController : ControllerBase
 
         // 2. Update Course Stats using stats service
         int xpGained = result.Score;
-        await _statsService.UpdateUserStatsWithScoreAsync(user.Id, lesson.Chapter!.CourseId, xpGained);
+        await _statsService.UpdateUserStatsWithScoreAsync(user.Id, lesson.Chapter.CourseId, xpGained);
 
         await _context.SaveChangesAsync();
         
@@ -94,7 +96,7 @@ public class LessonResultController : ControllerBase
         try
         {
             // 5. Check and award achievements
-            await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter!.CourseId, result.Score);
+            await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter.CourseId, result.Score);
         }
         catch (Exception ex)
         {
@@ -102,7 +104,8 @@ public class LessonResultController : ControllerBase
             // Don't fail the entire operation
         }
 
-        var updatedStats = await _statsService.GetOrCreateUserCourseStatsAsync(user.Id, lesson.Chapter!.CourseId);
+        var updatedStats = await _statsService.GetOrCreateUserCourseStatsAsync(user.Id, lesson.Chapter.CourseId);
+        if (updatedStats == null) return BadRequest("Failed to update user stats");
 
         return Ok(new { success = true, xpAdded = xpGained, totalXP = updatedStats.TotalXP });
     }
@@ -121,6 +124,8 @@ public class LessonResultController : ControllerBase
 
         // Update User Lesson Progress
         var lesson = quiz.Lesson;
+        if (lesson == null) return BadRequest("Quiz has no associated lesson");
+        
         var progress = await _context.UserLessonProgresses
             .FirstOrDefaultAsync(p => p.UserId == user.Id && p.LessonId == lesson.Id);
         
@@ -145,7 +150,9 @@ public class LessonResultController : ControllerBase
 
         // Update Course Stats using stats service
         int xpGained = score;
-        await _statsService.UpdateUserStatsWithScoreAsync(user.Id, lesson.Chapter!.CourseId, xpGained);
+        if (lesson.Chapter == null) return BadRequest("Lesson has no associated chapter");
+        
+        await _statsService.UpdateUserStatsWithScoreAsync(user.Id, lesson.Chapter.CourseId, xpGained);
 
         await _context.SaveChangesAsync();
 
@@ -166,7 +173,7 @@ public class LessonResultController : ControllerBase
         try
         {
             // Check and award achievements
-            await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter!.CourseId, score);
+            await _achievementService.CheckAndAwardAchievementsAsync(user.Id, lesson.Id, lesson.Chapter.CourseId, score);
         }
         catch (Exception ex)
         {
@@ -174,7 +181,8 @@ public class LessonResultController : ControllerBase
             // Don't fail the entire operation
         }
 
-        var updatedStats = await _statsService.GetOrCreateUserCourseStatsAsync(user.Id, lesson.Chapter!.CourseId);
+        var updatedStats = await _statsService.GetOrCreateUserCourseStatsAsync(user.Id, lesson.Chapter.CourseId);
+        if (updatedStats == null) return BadRequest("Failed to update user stats");
 
         return Ok(new { 
             success = true, 

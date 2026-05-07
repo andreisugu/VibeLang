@@ -16,9 +16,10 @@ public class LessonRepository : Repository<Lesson>, ILessonRepository
     {
         return await _context.Lessons
             .Include(l => l.Chapter)
-                .ThenInclude(c => c.Course)
-            .OrderBy(l => l.Chapter.CourseId)
-            .ThenBy(l => l.Chapter.Order)
+                .ThenInclude(c => c!.Course)
+            .Where(l => l.Chapter != null)
+            .OrderBy(l => l.Chapter!.CourseId)
+            .ThenBy(l => l.Chapter!.Order)
             .ThenBy(l => l.Order)
             .ToListAsync();
     }

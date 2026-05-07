@@ -7,13 +7,13 @@
 
 <h1 class="h4">Vocabulary</h1>
 
-@if (!User.Identity.IsAuthenticated)
+@if (User?.Identity?.IsAuthenticated == false)
 {
     <div class="alert alert-info">
         Please <a asp-area="Identity" asp-page="/Account/Login">log in</a> to view your vocabulary words from completed lessons.
     </div>
 }
-else if (!Model.Any())
+else if (Model == null || !Model.Any())
 {
     <div class="alert alert-info">
         Complete some lessons to build your vocabulary! Your learned words will appear here.

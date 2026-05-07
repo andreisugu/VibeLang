@@ -15,7 +15,7 @@ public class QuizRepository : Repository<Quiz>, IQuizRepository
             .Include(q => q.Questions)
             .ThenInclude(q => q.Options)
             .Include(q => q.Lesson)
-            .ThenInclude(l => l.Chapter)
+            .ThenInclude(l => l!.Chapter)
             .FirstOrDefaultAsync(q => q.Id == quizId);
     }
 
