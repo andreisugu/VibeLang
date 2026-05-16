@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Threading.Tasks;
@@ -6,6 +7,11 @@ using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
+/// <summary>
+/// ChaptersController – restricted to the "Admin" role.
+/// Chapter management (create, edit, delete) is an administrative operation.
+/// </summary>
+[Authorize(Roles = "Admin")]
 public class ChaptersController : Controller
 {
     private readonly IChapterService _chapterService;

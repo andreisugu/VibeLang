@@ -7,7 +7,10 @@ using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
-[Authorize]
+/// <summary>
+/// AchievementsController – accessible by both Admin and User roles.
+/// </summary>
+[Authorize(Roles = "Admin,User")]
 public class AchievementsController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;

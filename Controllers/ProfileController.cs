@@ -5,7 +5,10 @@ using VibeLang.Models;
 
 namespace VibeLang.Controllers;
 
-[Authorize]
+/// <summary>
+/// ProfileController – accessible by both Admin and User roles.
+/// </summary>
+[Authorize(Roles = "Admin,User")]
 public class ProfileController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;

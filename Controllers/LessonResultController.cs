@@ -7,7 +7,10 @@ using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
-[Authorize]
+/// <summary>
+/// LessonResultController – lesson/quiz submission API, accessible by both Admin and User roles.
+/// </summary>
+[Authorize(Roles = "Admin,User")]
 [ApiController]
 [Route("api/[controller]")]
 public class LessonResultController : ControllerBase

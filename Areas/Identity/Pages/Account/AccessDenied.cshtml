@@ -7,18 +7,36 @@
 
 <div class="auth-page-wrapper">
     <div class="auth-card" style="text-align:center; padding:3rem 2rem;">
-        <div class="auth-icon-wrapper">
+        <div class="auth-icon-wrapper" style="background: linear-gradient(135deg, #ef4444, #b91c1c);">
             <span class="auth-icon">🚫</span>
         </div>
-        <h1 class="auth-title" style="margin-top:1rem; color:#ef4444;">Access Denied</h1>
-        <p class="auth-subtitle" style="color:#6b7280;">
-            You do not have permission to view this page.
+        <h1 class="auth-title" style="margin-top:1.25rem; color:#ef4444;">Access Denied</h1>
+        <p class="auth-subtitle">
+            You don't have permission to view this page.<br />
+            This area is restricted to a specific user role.
         </p>
+
         <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
-            <a asp-controller="Home" asp-action="Index" class="auth-submit-btn" style="display:inline-flex; text-decoration:none; width:auto; padding:0.75rem 1.5rem;">
-                <span class="auth-btn-text">Go Home</span>
-                <span class="auth-btn-icon">🏠</span>
-            </a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Home" asp-action="Index"
+                   id="go-home-link"
+                   class="auth-submit-btn"
+                   style="display:inline-flex; text-decoration:none; width:auto; padding:0.75rem 1.5rem;">
+                    <span class="auth-btn-text">Go to Dashboard</span>
+                    <span class="auth-btn-icon">🏠</span>
+                </a>
+            }
+            else
+            {
+                <a asp-area="Identity" asp-page="/Account/Login"
+                   id="sign-in-link"
+                   class="auth-submit-btn"
+                   style="display:inline-flex; text-decoration:none; width:auto; padding:0.75rem 1.5rem;">
+                    <span class="auth-btn-text">Sign In</span>
+                    <span class="auth-btn-icon">→</span>
+                </a>
+            }
         </div>
     </div>
 </div>

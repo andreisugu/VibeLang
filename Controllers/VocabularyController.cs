@@ -6,7 +6,10 @@ using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
-[Authorize]
+/// <summary>
+/// VocabularyController – accessible by both Admin and User roles.
+/// </summary>
+[Authorize(Roles = "Admin,User")]
 public class VocabularyController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;

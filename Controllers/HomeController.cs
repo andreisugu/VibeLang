@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -7,6 +8,11 @@ using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
+/// <summary>
+/// HomeController – landing page is public ([AllowAnonymous]).
+/// Learning actions (Lesson, Courses, GetLessonData) require Admin or User role.
+/// </summary>
+[Authorize(Roles = "Admin,User")]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -59,6 +65,7 @@ public class HomeController : Controller
 
 
 
+    [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
         var user = await _userManager.GetUserAsync(User);
@@ -240,6 +247,7 @@ public class HomeController : Controller
         return View(courses);
     }
 
+    [AllowAnonymous]
     public IActionResult Privacy()
     {
         return View();

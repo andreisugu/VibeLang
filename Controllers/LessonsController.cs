@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Linq;
@@ -7,6 +8,11 @@ using VibeLang.Services;
 
 namespace VibeLang.Controllers;
 
+/// <summary>
+/// LessonsController – restricted to the "Admin" role.
+/// Lesson content management (create, edit, delete) is an administrative operation.
+/// </summary>
+[Authorize(Roles = "Admin")]
 public class LessonsController : Controller
 {
     private readonly ILessonService _lessonService;
@@ -28,9 +34,9 @@ public class LessonsController : Controller
     {
         var allChapters = await _chapterService.GetAllChaptersAsync();
         var chapters = allChapters
-            .Select(c => new { 
-                Id = c.Id, 
-                Display = $"{c?.Course?.Title} - {c?.Title}" 
+            .Select(c => new {
+                Id = c.Id,
+                Display = $"{c?.Course?.Title} - {c?.Title}"
             })
             .ToList();
         ViewData["ChapterId"] = new SelectList(chapters, "Id", "Display");
@@ -46,12 +52,12 @@ public class LessonsController : Controller
             await _lessonService.AddLessonAsync(lesson);
             return RedirectToAction(nameof(Index));
         }
-        
+
         var allChapters = await _chapterService.GetAllChaptersAsync();
         var chapters = allChapters
-            .Select(c => new { 
-                Id = c.Id, 
-                Display = $"{c?.Course?.Title} - {c?.Title}" 
+            .Select(c => new {
+                Id = c.Id,
+                Display = $"{c?.Course?.Title} - {c?.Title}"
             })
             .ToList();
         ViewData["ChapterId"] = new SelectList(chapters, "Id", "Display", lesson.ChapterId);
@@ -63,12 +69,12 @@ public class LessonsController : Controller
         if (id == null) return NotFound();
         var lesson = await _lessonService.GetLessonByIdAsync(id.Value);
         if (lesson == null) return NotFound();
-        
+
         var allChapters = await _chapterService.GetAllChaptersAsync();
         var chapters = allChapters
-            .Select(c => new { 
-                Id = c.Id, 
-                Display = $"{c?.Course?.Title} - {c?.Title}" 
+            .Select(c => new {
+                Id = c.Id,
+                Display = $"{c?.Course?.Title} - {c?.Title}"
             })
             .ToList();
         ViewData["ChapterId"] = new SelectList(chapters, "Id", "Display", lesson.ChapterId);
@@ -85,12 +91,12 @@ public class LessonsController : Controller
             await _lessonService.UpdateLessonAsync(lesson);
             return RedirectToAction(nameof(Index));
         }
-        
+
         var allChapters = await _chapterService.GetAllChaptersAsync();
         var chapters = allChapters
-            .Select(c => new { 
-                Id = c.Id, 
-                Display = $"{c?.Course?.Title} - {c?.Title}" 
+            .Select(c => new {
+                Id = c.Id,
+                Display = $"{c?.Course?.Title} - {c?.Title}"
             })
             .ToList();
         ViewData["ChapterId"] = new SelectList(chapters, "Id", "Display", lesson.ChapterId);
