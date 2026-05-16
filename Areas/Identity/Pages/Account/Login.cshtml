@@ -1,0 +1,77 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign In";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-card-header">
+            <div class="auth-icon-wrapper">
+                <span class="auth-icon">🌟</span>
+            </div>
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Sign in to continue learning</p>
+        </div>
+
+        <form id="loginForm" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="auth-error-summary" role="alert"></div>
+
+            <div class="auth-form-body">
+
+                <div class="auth-field">
+                    <label asp-for="Input.Email" class="auth-label">Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">✉️</span>
+                        <input asp-for="Input.Email"
+                               id="email"
+                               class="auth-input"
+                               autocomplete="username"
+                               placeholder="your@email.com" />
+                    </div>
+                    <span asp-validation-for="Input.Email" class="auth-field-error"></span>
+                </div>
+
+                <div class="auth-field">
+                    <label asp-for="Input.Password" class="auth-label">Password</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">🔒</span>
+                        <input asp-for="Input.Password"
+                               id="password"
+                               class="auth-input"
+                               autocomplete="current-password"
+                               placeholder="Enter your password" />
+                    </div>
+                    <span asp-validation-for="Input.Password" class="auth-field-error"></span>
+                </div>
+
+                <div class="auth-remember-row">
+                    <label class="auth-checkbox-label">
+                        <input asp-for="Input.RememberMe" id="rememberMe" class="auth-checkbox" />
+                        <span class="auth-checkbox-text">Remember me</span>
+                    </label>
+                </div>
+
+                <button id="loginSubmit" type="submit" class="auth-submit-btn">
+                    <span class="auth-btn-text">Sign In</span>
+                    <span class="auth-btn-icon">→</span>
+                </button>
+
+            </div>
+        </form>
+
+        <div class="auth-card-footer">
+            <p class="auth-footer-text">
+                Don't have an account?
+                <a id="registerLink" asp-page="./Register" class="auth-link">Sign up for free</a>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

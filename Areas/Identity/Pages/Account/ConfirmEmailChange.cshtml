@@ -1,0 +1,20 @@
+@page
+@model ConfirmEmailChangeModel
+@{
+    ViewData["Title"] = "Confirm Email Change";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page-wrapper">
+    <div class="auth-card" style="text-align:center; padding:3rem 2rem;">
+        <div class="auth-icon-wrapper"><span class="auth-icon">✉️</span></div>
+        <h1 class="auth-title" style="margin-top:1rem;">Email Change Confirmed</h1>
+        <partial name="_StatusMessage" for="StatusMessage" />
+        <div style="margin-top:2rem;">
+            <a asp-area="Identity" asp-page="/Account/Manage/Email" class="auth-submit-btn" style="display:inline-flex; text-decoration:none; width:auto; padding:0.75rem 1.5rem;">
+                <span class="auth-btn-text">Manage Email</span>
+                <span class="auth-btn-icon">→</span>
+            </a>
+        </div>
+    </div>
+</div>

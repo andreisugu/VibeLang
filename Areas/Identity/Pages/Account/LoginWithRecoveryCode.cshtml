@@ -1,0 +1,37 @@
+@page
+@model LoginWithRecoveryCodeModel
+@{
+    ViewData["Title"] = "Recovery Code Login";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <div class="auth-icon-wrapper"><span class="auth-icon">🗝️</span></div>
+            <h1 class="auth-title">Recovery Code</h1>
+            <p class="auth-subtitle">Enter one of your saved recovery codes</p>
+        </div>
+        <form id="recovery-code-form" method="post">
+            <div asp-validation-summary="ModelOnly" class="auth-error-summary" role="alert"></div>
+            <div class="auth-form-body">
+                <div class="auth-field">
+                    <label asp-for="Input.RecoveryCode" class="auth-label">Recovery Code</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">🗝️</span>
+                        <input asp-for="Input.RecoveryCode" id="recovery-code" class="auth-input" autocomplete="off" placeholder="xxxx-xxxx" />
+                    </div>
+                    <span asp-validation-for="Input.RecoveryCode" class="auth-field-error"></span>
+                </div>
+                <button id="recovery-code-submit" type="submit" class="auth-submit-btn">
+                    <span class="auth-btn-text">Sign In</span>
+                    <span class="auth-btn-icon">→</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

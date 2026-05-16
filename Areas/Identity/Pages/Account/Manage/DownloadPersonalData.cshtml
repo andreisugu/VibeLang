@@ -1,0 +1,14 @@
+@page
+@model DownloadPersonalDataModel
+@{
+    ViewData["Title"] = "Download Personal Data";
+    Layout = "_Layout.cshtml";
+}
+
+<h3>@ViewData["Title"]</h3>
+<div class="alert alert-warning" role="alert">
+    <p>Your data will be downloaded as a JSON file.</p>
+</div>
+<form id="download-personal-data-form" method="post">
+    <button id="download-data-submit" class="btn btn-primary" type="submit">Download</button>
+</form>

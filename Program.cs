@@ -21,8 +21,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<VibeLangDbContext>(options =>
     options.UseNpgsql(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
-// Configure Identity
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
+// Configure Identity with Role support
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
@@ -30,7 +30,9 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 6;
 })
-.AddEntityFrameworkStores<VibeLangDbContext>();
+.AddEntityFrameworkStores<VibeLangDbContext>()
+.AddDefaultUI()
+.AddDefaultTokenProviders();
 
 // Register Repositories
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
@@ -54,9 +56,12 @@ builder.Services.AddScoped<IVocabularyService, VocabularyService>();
 builder.Services.AddScoped<ILessonVocabularyService, LessonVocabularyService>();
 builder.Services.AddScoped<IStatsService, StatsService>();
 
+// Register Authentication Service (service layer for Identity)
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 var app = builder.Build();
 
-// Seed Database
+// Seed Database and Roles
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -64,11 +69,22 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<VibeLangDbContext>();
         await VibeLang.Data.DbInitializer.Initialize(context);
+
+        // Seed application roles (Admin and User) using RoleManager
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        string[] roles = { "Admin", "User" };
+        foreach (var role in roles)
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+            }
+        }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        logger.LogError(ex, "An error occurred while seeding the database or roles.");
     }
 }
 

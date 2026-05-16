@@ -1,0 +1,17 @@
+@page
+@model ExternalLoginModel
+@{
+    ViewData["Title"] = "External Login";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page-wrapper">
+    <div class="auth-card" style="text-align:center; padding:3rem 2rem;">
+        <div class="auth-icon-wrapper"><span class="auth-icon">🔗</span></div>
+        <h1 class="auth-title" style="margin-top:1rem;">External Login</h1>
+        <p class="auth-subtitle">
+            You have successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.<br />
+            You are being redirected...
+        </p>
+    </div>
+</div>

@@ -1,0 +1,55 @@
+@page
+@model TwoFactorAuthenticationModel
+@{
+    ViewData["Title"] = "Two-Factor Authentication (2FA)";
+    ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication;
+    Layout = "_Layout.cshtml";
+}
+
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+
+@if (Model.Is2faEnabled)
+{
+    if (Model.RecoveryCodesLeft == 0)
+    {
+        <div class="alert alert-danger">
+            <strong>You have no recovery codes left.</strong>
+            <a asp-page="./GenerateRecoveryCodes">Generate a new set of recovery codes</a>.
+        </div>
+    }
+    else if (Model.RecoveryCodesLeft == 1)
+    {
+        <div class="alert alert-danger">
+            <strong>You have 1 recovery code left.</strong>
+            <a asp-page="./GenerateRecoveryCodes">Generate a new set of recovery codes</a>.
+        </div>
+    }
+    else if (Model.RecoveryCodesLeft <= 3)
+    {
+        <div class="alert alert-warning">
+            <strong>You have @Model.RecoveryCodesLeft recovery codes left.</strong>
+            <a asp-page="./GenerateRecoveryCodes">Generate a new set of recovery codes</a>.
+        </div>
+    }
+
+    if (Model.IsMachineRemembered)
+    {
+        <form method="post" style="display:inline-block">
+            <button type="submit" class="btn btn-primary">Forget this browser</button>
+        </form>
+    }
+    <a asp-page="./Disable2fa" class="btn btn-primary">Disable 2FA</a>
+    <a asp-page="./GenerateRecoveryCodes" class="btn btn-primary">Reset recovery codes</a>
+}
+
+<h4>Authenticator App</h4>
+@if (!Model.HasAuthenticator)
+{
+    <a asp-page="./EnableAuthenticator" class="btn btn-primary">Add authenticator app</a>
+}
+else
+{
+    <a asp-page="./EnableAuthenticator" class="btn btn-primary">Set up authenticator app</a>
+    <a asp-page="./ResetAuthenticator" class="btn btn-primary">Reset authenticator app</a>
+}

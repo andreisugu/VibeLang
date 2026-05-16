@@ -1,0 +1,49 @@
+@page
+@model LoginWith2faModel
+@{
+    ViewData["Title"] = "Two-Factor Authentication";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <div class="auth-icon-wrapper"><span class="auth-icon">🔐</span></div>
+            <h1 class="auth-title">Two-Factor Auth</h1>
+            <p class="auth-subtitle">Enter the code from your authenticator app</p>
+        </div>
+        <form id="login-with-2fa-form" method="post">
+            <div asp-validation-summary="ModelOnly" class="auth-error-summary" role="alert"></div>
+            <div class="auth-form-body">
+                <div class="auth-field">
+                    <label asp-for="Input.TwoFactorCode" class="auth-label">Authenticator Code</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">🔢</span>
+                        <input asp-for="Input.TwoFactorCode" id="two-factor-code" class="auth-input" autocomplete="one-time-code" placeholder="6-digit code" />
+                    </div>
+                    <span asp-validation-for="Input.TwoFactorCode" class="auth-field-error"></span>
+                </div>
+                <div class="auth-remember-row">
+                    <label class="auth-checkbox-label">
+                        <input asp-for="Input.RememberMachine" id="remember-machine" class="auth-checkbox" />
+                        <span class="auth-checkbox-text">Remember this machine</span>
+                    </label>
+                </div>
+                <button id="login-with-2fa-submit" type="submit" class="auth-submit-btn">
+                    <span class="auth-btn-text">Verify</span>
+                    <span class="auth-btn-icon">→</span>
+                </button>
+            </div>
+        </form>
+        <div class="auth-card-footer">
+            <p class="auth-footer-text">
+                Don't have access to your authenticator?
+                <a id="recovery-code-login" asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">Use recovery code</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

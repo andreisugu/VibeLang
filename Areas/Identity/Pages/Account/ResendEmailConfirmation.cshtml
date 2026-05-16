@@ -1,0 +1,37 @@
+@page
+@model ResendEmailConfirmationModel
+@{
+    ViewData["Title"] = "Resend Email Confirmation";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <div class="auth-icon-wrapper"><span class="auth-icon">📧</span></div>
+            <h1 class="auth-title">Resend Confirmation</h1>
+            <p class="auth-subtitle">Enter your email to get a new confirmation link</p>
+        </div>
+        <form id="resend-confirmation-form" method="post">
+            <div asp-validation-summary="All" class="auth-error-summary" role="alert"></div>
+            <div class="auth-form-body">
+                <div class="auth-field">
+                    <label asp-for="Input.Email" class="auth-label">Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">✉️</span>
+                        <input asp-for="Input.Email" id="resend-email" class="auth-input" autocomplete="email" placeholder="your@email.com" />
+                    </div>
+                    <span asp-validation-for="Input.Email" class="auth-field-error"></span>
+                </div>
+                <button id="resend-confirmation-submit" type="submit" class="auth-submit-btn">
+                    <span class="auth-btn-text">Resend</span>
+                    <span class="auth-btn-icon">→</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

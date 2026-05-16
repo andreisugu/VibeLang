@@ -1,0 +1,111 @@
+@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Create Account";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-card-header">
+            <div class="auth-icon-wrapper">
+                <span class="auth-icon">🚀</span>
+            </div>
+            <h1 class="auth-title">Join VibeLang</h1>
+            <p class="auth-subtitle">Start your language learning journey today</p>
+        </div>
+
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="auth-error-summary" role="alert"></div>
+
+            <div class="auth-form-body">
+
+                <div class="auth-name-row">
+                    <div class="auth-field">
+                        <label asp-for="Input.FirstName" class="auth-label">First Name</label>
+                        <div class="auth-input-wrapper">
+                            <span class="auth-input-icon">👤</span>
+                            <input asp-for="Input.FirstName"
+                                   id="firstName"
+                                   class="auth-input"
+                                   autocomplete="given-name"
+                                   placeholder="Ana" />
+                        </div>
+                        <span asp-validation-for="Input.FirstName" class="auth-field-error"></span>
+                    </div>
+
+                    <div class="auth-field">
+                        <label asp-for="Input.LastName" class="auth-label">Last Name</label>
+                        <div class="auth-input-wrapper">
+                            <span class="auth-input-icon">👤</span>
+                            <input asp-for="Input.LastName"
+                                   id="lastName"
+                                   class="auth-input"
+                                   autocomplete="family-name"
+                                   placeholder="Popescu" />
+                        </div>
+                        <span asp-validation-for="Input.LastName" class="auth-field-error"></span>
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label asp-for="Input.Email" class="auth-label">Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">✉️</span>
+                        <input asp-for="Input.Email"
+                               id="email"
+                               class="auth-input"
+                               autocomplete="username"
+                               placeholder="ana.popescu@email.com" />
+                    </div>
+                    <span asp-validation-for="Input.Email" class="auth-field-error"></span>
+                </div>
+
+                <div class="auth-field">
+                    <label asp-for="Input.Password" class="auth-label">Password</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">🔒</span>
+                        <input asp-for="Input.Password"
+                               id="password"
+                               class="auth-input"
+                               autocomplete="new-password"
+                               placeholder="Minimum 6 characters" />
+                    </div>
+                    <span asp-validation-for="Input.Password" class="auth-field-error"></span>
+                </div>
+
+                <div class="auth-field">
+                    <label asp-for="Input.ConfirmPassword" class="auth-label">Confirm Password</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">🔒</span>
+                        <input asp-for="Input.ConfirmPassword"
+                               id="confirmPassword"
+                               class="auth-input"
+                               autocomplete="new-password"
+                               placeholder="Repeat your password" />
+                    </div>
+                    <span asp-validation-for="Input.ConfirmPassword" class="auth-field-error"></span>
+                </div>
+
+                <button id="registerSubmit" type="submit" class="auth-submit-btn">
+                    <span class="auth-btn-text">Create Account</span>
+                    <span class="auth-btn-icon">→</span>
+                </button>
+
+            </div>
+        </form>
+
+        <div class="auth-card-footer">
+            <p class="auth-footer-text">
+                Already have an account?
+                <a id="loginLink" asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">Sign in</a>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
