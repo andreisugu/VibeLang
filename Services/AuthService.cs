@@ -88,4 +88,17 @@ public class AuthService : IAuthService
     {
         return await _userManager.GetUserAsync(principal);
     }
+
+    /// <inheritdoc/>
+    public async Task<string?> GetUserRoleAsync(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null) return null;
+
+        // GetRolesAsync returns all roles; we return the first one (priority: Admin > User)
+        var roles = await _userManager.GetRolesAsync(user);
+        if (roles.Contains("Admin")) return "Admin";
+        if (roles.Count > 0) return roles[0];
+        return null;
+    }
 }

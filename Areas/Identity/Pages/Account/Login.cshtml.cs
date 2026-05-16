@@ -60,8 +60,6 @@ namespace VibeLang.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            returnUrl ??= Url.Content("~/");
-
             if (!ModelState.IsValid)
             {
                 return Page();
@@ -72,6 +70,16 @@ namespace VibeLang.Areas.Identity.Pages.Account
 
             if (result.Succeeded)
             {
+                // Role-based redirect: send each role to its appropriate dashboard.
+                // Only override returnUrl when it is the generic home root (i.e. no specific page was requested).
+                if (string.IsNullOrEmpty(returnUrl) || returnUrl == Url.Content("~/"))
+                {
+                    var role = await _authService.GetUserRoleAsync(Input.Email);
+                    return role == "Admin"
+                        ? RedirectToAction("Index", "Admin")    // Admin dashboard
+                        : RedirectToAction("Courses", "Home");  // Learner dashboard
+                }
+
                 return LocalRedirect(returnUrl);
             }
 
@@ -81,7 +89,7 @@ namespace VibeLang.Areas.Identity.Pages.Account
                 return Page();
             }
 
-            // Invalid credentials
+            // Invalid credentials — do NOT specify which field was wrong (security best practice)
             ModelState.AddModelError(string.Empty, "Invalid email or password. Please try again.");
             return Page();
         }

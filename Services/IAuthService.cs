@@ -39,4 +39,12 @@ public interface IAuthService
     /// </summary>
     /// <param name="principal">The current <see cref="System.Security.Claims.ClaimsPrincipal"/>.</param>
     Task<ApplicationUser?> GetCurrentUserAsync(System.Security.Claims.ClaimsPrincipal principal);
+
+    /// <summary>
+    /// Returns the primary role of the user identified by the given email address.
+    /// Used after login to decide which dashboard to redirect to.
+    /// Returns null if the user is not found or has no roles.
+    /// </summary>
+    /// <param name="email">The user's email address.</param>
+    Task<string?> GetUserRoleAsync(string email);
 }

@@ -35,7 +35,12 @@
                 </div>
 
                 <div class="auth-field">
-                    <label asp-for="Input.Password" class="auth-label">Password</label>
+                    <div class="auth-label-row">
+                        <label asp-for="Input.Password" class="auth-label">Password</label>
+                        <a id="forgotPasswordLink"
+                           asp-page="./ForgotPassword"
+                           class="auth-forgot-link">Forgot password?</a>
+                    </div>
                     <div class="auth-input-wrapper">
                         <span class="auth-input-icon">🔒</span>
                         <input asp-for="Input.Password"
@@ -43,6 +48,13 @@
                                class="auth-input"
                                autocomplete="current-password"
                                placeholder="Enter your password" />
+                        <button type="button"
+                                id="togglePassword"
+                                class="auth-toggle-password"
+                                aria-label="Show or hide password"
+                                title="Show/hide password">
+                            <span id="togglePasswordIcon">👁️</span>
+                        </button>
                     </div>
                     <span asp-validation-for="Input.Password" class="auth-field-error"></span>
                 </div>
@@ -50,7 +62,7 @@
                 <div class="auth-remember-row">
                     <label class="auth-checkbox-label">
                         <input asp-for="Input.RememberMe" id="rememberMe" class="auth-checkbox" />
-                        <span class="auth-checkbox-text">Remember me</span>
+                        <span class="auth-checkbox-text">Remember me on this device</span>
                     </label>
                 </div>
 
@@ -74,4 +86,16 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Password show/hide toggle
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('togglePasswordIcon');
+
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = passwordInput.type === 'password';
+            passwordInput.type = isHidden ? 'text' : 'password';
+            toggleIcon.textContent = isHidden ? '🙈' : '👁️';
+        });
+    </script>
 }
