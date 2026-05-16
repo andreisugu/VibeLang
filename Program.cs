@@ -81,7 +81,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
-// Seed Database and Roles
+// Seed Database, Roles, and backfill any role-less users
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -90,7 +90,7 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<VibeLangDbContext>();
         await VibeLang.Data.DbInitializer.Initialize(context);
 
-        // Seed application roles (Admin and User) using RoleManager
+        // 1. Seed application roles (Admin and User) using RoleManager
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         string[] roles = { "Admin", "User" };
         foreach (var role in roles)
@@ -98,6 +98,18 @@ using (var scope = app.Services.CreateScope())
             if (!await roleManager.RoleExistsAsync(role))
             {
                 await roleManager.CreateAsync(new IdentityRole(role));
+            }
+        }
+
+        // 2. Backfill: assign "User" role to any existing account that has no role.
+        //    This handles accounts registered before role-assignment was implemented.
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        foreach (var user in userManager.Users.ToList())
+        {
+            var userRoles = await userManager.GetRolesAsync(user);
+            if (userRoles.Count == 0)
+            {
+                await userManager.AddToRoleAsync(user, "User");
             }
         }
     }
