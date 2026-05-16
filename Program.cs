@@ -112,6 +112,27 @@ using (var scope = app.Services.CreateScope())
                 await userManager.AddToRoleAsync(user, "User");
             }
         }
+
+        // 3. Seed a default Admin account for demonstration purposes.
+        //    Email: admin@vibelang.com  |  Password: Admin123
+        //    This allows demonstrating Admin-vs-User role differences.
+        const string adminEmail = "admin@vibelang.com";
+        if (await userManager.FindByEmailAsync(adminEmail) == null)
+        {
+            var adminUser = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                FirstName = "Admin",
+                LastName = "VibeLang",
+                EmailConfirmed = true
+            };
+            var adminResult = await userManager.CreateAsync(adminUser, "Admin123");
+            if (adminResult.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+        }
     }
     catch (Exception ex)
     {
@@ -134,6 +155,9 @@ app.UseRouting();
 app.UseAuthentication(); // Added
 app.UseAuthorization();
 
+// UseStaticFiles serves runtime-created files (e.g. uploaded profile pictures).
+// MapStaticAssets only knows files present at compile time — not dynamic uploads.
+app.UseStaticFiles();
 app.MapStaticAssets();
 app.MapRazorPages(); // Added for Identity UI
 
