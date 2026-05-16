@@ -1,6 +1,14 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// Adapted from ASP.NET Core Identity scaffolded template.
-// Authentication logic delegated to IAuthService (service layer).
+// ============================================================
+//  RegisterModel — Razor Page Code-Behind (Presentation Layer)
+//
+//  REFACTORED: Authentication logic has been moved OUT of this
+//  file and into AuthService (Service Layer). This class only:
+//    1. Binds and validates form input (DataAnnotations)
+//    2. Delegates to IAuthService
+//    3. Handles redirects and ModelState errors
+//
+//  NO direct calls to UserManager or SignInManager here.
+// ============================================================
 #nullable disable
 
 using System.ComponentModel.DataAnnotations;
@@ -11,8 +19,15 @@ using VibeLang.Services;
 
 namespace VibeLang.Areas.Identity.Pages.Account
 {
+    /// <summary>
+    /// Handles the user registration page (GET + POST).
+    /// Authentication logic is fully delegated to <see cref="IAuthService"/>.
+    /// </summary>
     public class RegisterModel : PageModel
     {
+        // ── Dependency: IAuthService injected by DI ──────────────
+        //    This is the ONLY Identity-related dependency.
+        //    UserManager and SignInManager are hidden behind the interface.
         private readonly IAuthService _authService;
 
         public RegisterModel(IAuthService authService)
@@ -27,6 +42,7 @@ namespace VibeLang.Areas.Identity.Pages.Account
 
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
+        // ── Input model: validated by DataAnnotations before OnPostAsync runs ──
         public class InputModel
         {
             [Required(ErrorMessage = "First name is required.")]
@@ -45,7 +61,7 @@ namespace VibeLang.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             [Required(ErrorMessage = "Password is required.")]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at most {1} characters long.", MinimumLength = 6)]
+            [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
             public string Password { get; set; }
@@ -56,40 +72,48 @@ namespace VibeLang.Areas.Identity.Pages.Account
             public string ConfirmPassword { get; set; }
         }
 
+        // GET /Identity/Account/Register
         public IActionResult OnGet(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
             return Page();
         }
 
+        // POST /Identity/Account/Register
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            returnUrl ??= Url.Content("~/");
-
+            // 1. Validate form input via DataAnnotations
             if (!ModelState.IsValid)
             {
-                return Page();
+                return Page(); // redisplay form with validation errors
             }
 
-            // Delegate registration logic to the service layer
+            // 2. Delegate ALL registration logic to the service layer
+            //    (UserManager.CreateAsync, role assignment, SignInAsync)
             var result = await _authService.RegisterAsync(
                 Input.Email,
                 Input.Password,
                 Input.FirstName,
                 Input.LastName);
 
+            // 3. On success: role-based redirect to the correct dashboard
             if (result.Succeeded)
             {
+                // New users always get the "User" role (see AuthService.RegisterAsync).
+                // Admins cannot self-register; they must be promoted by another Admin.
+                if (string.IsNullOrEmpty(returnUrl) || returnUrl == Url.Content("~/"))
+                {
+                    return RedirectToAction("Courses", "Home"); // Learner dashboard
+                }
                 return LocalRedirect(returnUrl);
             }
 
-            // Surface Identity errors back to the form
+            // 4. On failure: surface IdentityResult errors back to the form
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error.Description);
             }
 
-            // If we got this far, something failed — redisplay the form
             return Page();
         }
     }

@@ -65,7 +65,18 @@ builder.Services.AddScoped<IVocabularyService, VocabularyService>();
 builder.Services.AddScoped<ILessonVocabularyService, LessonVocabularyService>();
 builder.Services.AddScoped<IStatsService, StatsService>();
 
-// Register Authentication Service (service layer for Identity)
+// ── Authentication Service Layer ─────────────────────────────────────────
+//  IAuthService (interface) is implemented by AuthService (concrete class).
+//  Registered as Scoped so each HTTP request gets its own instance.
+//
+//  Consumers (injected via constructor):
+//    • LoginModel    (Areas/Identity/Pages/Account/Login.cshtml.cs)
+//    • RegisterModel (Areas/Identity/Pages/Account/Register.cshtml.cs)
+//    • LogoutModel   (Areas/Identity/Pages/Account/Logout.cshtml.cs)
+//
+//  This ensures UserManager and SignInManager are never referenced
+//  directly in Razor Page code-behind files (Service Layer pattern).
+// ─────────────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();

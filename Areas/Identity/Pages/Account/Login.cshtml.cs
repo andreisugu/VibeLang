@@ -1,6 +1,15 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// Adapted from ASP.NET Core Identity scaffolded template.
-// Authentication logic delegated to IAuthService (service layer).
+// ============================================================
+//  LoginModel — Razor Page Code-Behind (Presentation Layer)
+//
+//  REFACTORED: Authentication logic moved to AuthService.LoginAsync().
+//  This class only:
+//    1. Binds and validates form input (DataAnnotations)
+//    2. Delegates to IAuthService.LoginAsync()
+//    3. Performs role-based redirect via IAuthService.GetUserRoleAsync()
+//    4. Handles ModelState errors
+//
+//  NO direct calls to SignInManager or UserManager here.
+// ============================================================
 #nullable disable
 
 using System.ComponentModel.DataAnnotations;
