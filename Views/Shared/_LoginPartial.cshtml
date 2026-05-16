@@ -3,15 +3,51 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
+<ul class="navbar-nav align-items-center">
 @if (SignInManager.IsSignedIn(User))
 {
+    var currentUser = await UserManager.GetUserAsync(User);
+    var displayName = currentUser?.FirstName ?? currentUser?.UserName ?? "Profile";
+    var initials = displayName.Length > 0 ? displayName[0].ToString().ToUpper() : "?";
+    var hasPicture = !string.IsNullOrEmpty(currentUser?.ProfilePicturePath);
+
     <li class="nav-item">
-        <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Profile</a>
+        @* Profile picture mini-avatar in the navbar *@
+        <a id="navbar-profile-link"
+           class="nav-link d-flex align-items-center gap-2 text-dark"
+           asp-controller="Profile"
+           asp-action="Index"
+           title="My Profile">
+
+            @if (hasPicture)
+            {
+                <img id="navbar-avatar-img"
+                     src="@currentUser!.ProfilePicturePath"
+                     alt="Profile"
+                     class="rounded-circle object-fit-cover"
+                     style="width:32px;height:32px;object-fit:cover;border:2px solid #FF9500;" />
+            }
+            else
+            {
+                <span id="navbar-avatar-initials"
+                      class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold"
+                      style="width:32px;height:32px;font-size:0.8rem;background:linear-gradient(135deg,#FF9500,#FF5E00);flex-shrink:0;">
+                    @initials
+                </span>
+            }
+            <span class="d-none d-md-inline">@displayName</span>
+        </a>
     </li>
+
     <li class="nav-item">
-        <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
+        <form id="logoutForm"
+              class="form-inline"
+              asp-area="Identity"
+              asp-page="/Account/Logout"
+              asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">
+                Logout
+            </button>
         </form>
     </li>
 }

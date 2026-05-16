@@ -1,51 +1,150 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<VibeLang.Models.ApplicationUser> UserManager
 @{
-    ViewData["Title"] = "Profile";
+    ViewData["Title"] = "My Profile";
     var user = await UserManager.GetUserAsync(User);
+    var initials = (user?.FirstName?.Length > 0 ? user.FirstName[0].ToString() :
+                    user?.UserName?.Length > 0 ? user.UserName[0].ToString() : "?").ToUpper();
+    var hasPicture = !string.IsNullOrEmpty(user?.ProfilePicturePath);
 }
 
-<h1 class="h4 mb-4">Your Profile</h1>
+<div class="container py-4" style="max-width:860px;">
 
-<div class="row">
-    <!-- col-4: 1/3 width column-->
-    <div class="col-md-4 text-center mb-4">
-        <!-- rounded-circle: circular element, mx-auto: center horizontally -->
-        <div class="rounded-circle bg-secondary mx-auto mb-3 d-flex align-items-center justify-content-center text-white h1" style="width:100px;height:100px;">
-            @(user?.FirstName?[0].ToString().ToUpper() ?? user?.UserName?[0].ToString().ToUpper() ?? "?")
+    <h1 class="h4 mb-4 fw-bold">My Profile</h1>
+
+    @* ── Success / error alerts ── *@
+    @if (TempData["StatusMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["StatusMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        <div class="fw-bold">@user?.UserName</div>
-        <div class="text-muted small">@user?.Email</div>
-    </div>
-    
-    <!-- col-8: 2/3 width column -->
-    <div class="col-md-8">
-        @if (TempData["StatusMessage"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                @TempData["StatusMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        }
+    }
+    @if (TempData["PictureError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["PictureError"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-        <form asp-action="Update" method="post">
+    <div class="row g-4">
+
+        @* ── LEFT: Avatar card ── *@
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center p-4">
+
+                @* Profile picture or initials fallback *@
+                @if (hasPicture)
+                {
+                    <img id="profile-avatar-img"
+                         src="@user!.ProfilePicturePath"
+                         alt="Profile picture"
+                         class="rounded-circle mx-auto mb-3 object-fit-cover"
+                         style="width:110px;height:110px;object-fit:cover;border:3px solid #FF9500;" />
+                }
+                else
+                {
+                    <div id="profile-avatar-initials"
+                         class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center text-white fw-bold fs-2"
+                         style="width:110px;height:110px;background:linear-gradient(135deg,#FF9500,#FF5E00);">
+                        @initials
+                    </div>
+                }
+
+                <div class="fw-bold fs-6">@(user?.FullName is { Length: > 0 } fn ? fn : user?.UserName)</div>
+                <div class="text-muted small mb-3">@user?.Email</div>
+
+                @* ── Upload form ── *@
+                <form id="upload-picture-form"
+                      asp-action="UploadPicture"
+                      asp-controller="Profile"
+                      method="post"
+                      enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <label for="profilePicture"
+                           id="upload-picture-label"
+                           class="btn btn-sm btn-outline-secondary w-100 mb-2"
+                           style="cursor:pointer;">
+                        📷 Change Photo
+                    </label>
+                    <input type="file"
+                           id="profilePicture"
+                           name="profilePicture"
+                           accept="image/jpeg,image/png,image/gif,image/webp"
+                           class="d-none"
+                           onchange="document.getElementById('upload-picture-form').submit();" />
+                </form>
+
+                @* Remove button only shown when a picture exists *@
+                @if (hasPicture)
+                {
+                    <form id="remove-picture-form"
+                          asp-action="RemovePicture"
+                          asp-controller="Profile"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <button id="remove-picture-btn"
+                                type="submit"
+                                class="btn btn-sm btn-outline-danger w-100"
+                                onclick="return confirm('Remove your profile picture?');">
+                            🗑️ Remove Photo
+                        </button>
+                    </form>
+                }
+
+                <p class="text-muted" style="font-size:0.72rem;margin-top:0.5rem;">
+                    JPEG, PNG, GIF or WebP · Max 5 MB
+                </p>
+            </div>
+        </div>
+
+        @* ── RIGHT: Profile info form ── *@
+        <div class="col-md-8">
             <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">First Name</label>
-                        <input name="FirstName" class="form-control" type="text" placeholder="First Name" value="@user?.FirstName">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Last Name</label>
-                        <input name="LastName" class="form-control" type="text" placeholder="Last Name" value="@user?.LastName">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Email (Read-only)</label>
-                        <input class="form-control" type="email" value="@user?.Email" disabled>
-                    </div>
-                    <button class="btn btn-primary rounded-pill px-4" type="submit">Save Changes</button>
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4">Personal Information</h5>
+                    <form id="update-profile-form"
+                          asp-action="Update"
+                          asp-controller="Profile"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label fw-semibold">First Name</label>
+                            <input id="firstName"
+                                   name="firstName"
+                                   class="form-control"
+                                   type="text"
+                                   placeholder="First name"
+                                   value="@user?.FirstName" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label fw-semibold">Last Name</label>
+                            <input id="lastName"
+                                   name="lastName"
+                                   class="form-control"
+                                   type="text"
+                                   placeholder="Last name"
+                                   value="@user?.LastName" />
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Email Address</label>
+                            <input class="form-control bg-light"
+                                   type="email"
+                                   value="@user?.Email"
+                                   disabled />
+                            <div class="form-text">Email cannot be changed here.</div>
+                        </div>
+                        <button id="save-profile-btn"
+                                type="submit"
+                                class="btn btn-primary rounded-pill px-4">
+                            💾 Save Changes
+                        </button>
+                    </form>
                 </div>
             </div>
-        </form>
+        </div>
+
     </div>
 </div>
