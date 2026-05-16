@@ -189,3 +189,6 @@ Thumbs.db
 *~
 DocProject/Help/*.hhk
 appsettings.Development.json
+
+# User-uploaded files (runtime, not tracked in source control)
+wwwroot/uploads/
