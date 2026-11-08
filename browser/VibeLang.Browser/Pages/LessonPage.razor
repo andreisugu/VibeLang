@@ -1,0 +1,113 @@
+@page "/lessons/{Id:int}"
+@inject BrowserDbContext Db
+
+<PageTitle>Lesson — VibeLang</PageTitle>
+
+@if (lesson is null)
+{
+    <p class="text-muted">Loading lesson…</p>
+}
+else
+{
+    <a href="courses/@lesson.Chapter?.CourseId" class="small">← Back to course</a>
+    <h1 class="h3 mt-2">@lesson.Title</h1>
+    <div class="text-muted mb-4">@lesson.Chapter?.Title · @lesson.Difficulty</div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <h2 class="h5">Vocabulary</h2>
+            @if (lesson.VocabularyWords.Count == 0)
+            {
+                <p class="text-muted">No vocabulary in this lesson.</p>
+            }
+            @foreach (var word in lesson.VocabularyWords.OrderBy(w => w.Id))
+            {
+                <div class="vocab p-3 mb-2">
+                    <div class="fw-semibold">@word.Word</div>
+                    <div class="text-muted">@word.Translation</div>
+                    @if (!string.IsNullOrWhiteSpace(word.ExampleSentence))
+                    {
+                        <div class="small fst-italic mt-1">@word.ExampleSentence</div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-7">
+            <h2 class="h5">Practice</h2>
+            @if (content?.teste is null || content.teste.Count == 0)
+            {
+                <p class="text-muted">No practice items in this lesson.</p>
+            }
+            else
+            {
+                @for (var i = 0; i < content.teste.Count; i++)
+                {
+                    var index = i;
+                    var test = content.teste[i];
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="fw-semibold">@test.propozitie</div>
+                            @if (string.IsNullOrWhiteSpace(test.raspunsCorect))
+                            {
+                                <div class="text-muted small mt-2">No answer stored for this item in the demo data.</div>
+                            }
+                            else if (revealed.Contains(index))
+                            {
+                                <div class="answer p-2 mt-2">@test.raspunsCorect</div>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-outline-primary mt-2" @onclick="() => revealed.Add(index)">Show answer</button>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Lesson? lesson;
+    private LessonContent? content;
+    private readonly HashSet<int> revealed = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        lesson = await Db.Lessons.AsNoTracking()
+            .Include(l => l.VocabularyWords)
+            .Include(l => l.Chapter)
+            .FirstOrDefaultAsync(l => l.Id == Id);
+
+        if (!string.IsNullOrWhiteSpace(lesson?.ContentJson))
+        {
+            try
+            {
+                var raw = lesson.ContentJson.Replace("\\'", "'");
+                content = JsonSerializer.Deserialize<LessonContent>(raw, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch
+            {
+                content = null;
+            }
+        }
+    }
+
+    public sealed class LessonContent
+    {
+        public string? numeLectie { get; set; }
+        public string? dificultate { get; set; }
+        public List<JsonElement>? cuvinteInvatate { get; set; }
+        public List<TestItem>? teste { get; set; }
+    }
+
+    public sealed class TestItem
+    {
+        public int tip { get; set; }
+        public string? propozitie { get; set; }
+        public string? raspunsCorect { get; set; }
+    }
+}

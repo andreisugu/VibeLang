@@ -1,0 +1,42 @@
+@page "/login"
+@inject DemoSession Session
+@inject NavigationManager Nav
+
+<PageTitle>Sign in — VibeLang demo</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+        <div class="card">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-1">Sign in</h1>
+                <p class="text-muted small">
+                    This is a browser demo. There is no server and no real authentication;
+                    the name is kept in this tab only.
+                </p>
+
+                <EditForm Model="model" OnValidSubmit="Submit">
+                    <div class="mb-3">
+                        <label class="form-label">Your name</label>
+                        <InputText @bind-Value="model.Name" class="form-control" />
+                    </div>
+                    <button class="btn btn-primary w-100" type="submit">Continue</button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel model = new();
+
+    private void Submit()
+    {
+        Session.SignIn(model.Name);
+        Nav.NavigateTo("");
+    }
+
+    public sealed class LoginModel
+    {
+        public string Name { get; set; } = "Demo Student";
+    }
+}

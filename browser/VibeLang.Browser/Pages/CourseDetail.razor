@@ -1,0 +1,55 @@
+@page "/courses/{Id:int}"
+@inject BrowserDbContext Db
+
+<PageTitle>Course — VibeLang</PageTitle>
+
+@if (course is null)
+{
+    <p class="text-muted">Loading course…</p>
+}
+else
+{
+    <a href="courses" class="small">← All courses</a>
+    <h1 class="h3 mt-2">@course.Title</h1>
+    <p class="text-muted">@course.Description</p>
+
+    @foreach (var chapter in course.Chapters.OrderBy(c => c.Order))
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="h5">Chapter @chapter.Order — @chapter.Title</h2>
+                @if (chapter.Lessons.Count == 0)
+                {
+                    <p class="text-muted small mb-0">No lessons in this chapter yet.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var lesson in chapter.Lessons.OrderBy(l => l.Order))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <a href="lessons/@lesson.Id">@lesson.Title</a>
+                                    <span class="badge badge-soft ms-2">@lesson.Difficulty</span>
+                                </div>
+                                <span class="text-muted small">@lesson.VocabularyWords.Count words</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Course? course;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        course = await Db.Courses.AsNoTracking()
+            .Include(c => c.Chapters).ThenInclude(ch => ch.Lessons).ThenInclude(l => l.VocabularyWords)
+            .FirstOrDefaultAsync(c => c.Id == Id);
+    }
+}

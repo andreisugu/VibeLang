@@ -1,0 +1,33 @@
+@implements IDisposable
+@inject DemoSession Session
+@inject NavigationManager Nav
+
+<nav class="ms-auto d-flex align-items-center gap-1 gap-md-3">
+    <a class="nav-link" href="courses">Courses</a>
+    <a class="nav-link" href="achievements">Achievements</a>
+    <a class="nav-link" href="leaderboard">Leaderboard</a>
+
+    @if (Session.IsSignedIn)
+    {
+        <span class="badge badge-soft ms-2">@Session.Name</span>
+        <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="SignOut">Sign out</button>
+    }
+    else
+    {
+        <a class="btn btn-sm btn-primary ms-2" href="login">Sign in</a>
+    }
+</nav>
+
+@code {
+    protected override void OnInitialized() => Session.Changed += OnSessionChanged;
+
+    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+
+    private void SignOut()
+    {
+        Session.SignOut();
+        Nav.NavigateTo("");
+    }
+
+    public void Dispose() => Session.Changed -= OnSessionChanged;
+}

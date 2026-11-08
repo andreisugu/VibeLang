@@ -10,7 +10,7 @@ COPY VibeLang.csproj ./
 RUN dotnet restore
 
 COPY . .
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish VibeLang.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # ---------------------------------------------------------------------------
 # Runtime

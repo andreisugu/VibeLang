@@ -1,0 +1,31 @@
+@page "/achievements"
+@inject BrowserDbContext Db
+
+<PageTitle>Achievements — VibeLang</PageTitle>
+
+<h1 class="h3 mb-1">Achievements</h1>
+<p class="text-muted">Six badges from the real VibeLang database.</p>
+
+<div class="row g-3">
+    @foreach (var achievement in achievements)
+    {
+        <div class="col-md-6">
+            <div class="course-card p-3 d-flex gap-3">
+                <div class="achievement-icon">★</div>
+                <div>
+                    <h2 class="h6 mb-1">@achievement.Title</h2>
+                    <p class="text-muted small mb-0">@achievement.Description</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Achievement> achievements = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        achievements = await Db.Achievements.AsNoTracking().OrderBy(a => a.Id).ToListAsync();
+    }
+}

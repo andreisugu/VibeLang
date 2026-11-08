@@ -1,0 +1,42 @@
+@page "/courses"
+@inject BrowserDbContext Db
+
+<PageTitle>Courses — VibeLang</PageTitle>
+
+<div class="d-flex justify-content-between align-items-end mb-3">
+    <div>
+        <h1 class="h3 mb-0">Courses</h1>
+        <div class="text-muted small">@courses.Count learning paths</div>
+    </div>
+    <a href="" class="small">Home</a>
+</div>
+
+<div class="row g-3">
+    @foreach (var course in courses)
+    {
+        var lessons = course.Chapters.Sum(ch => ch.Lessons.Count);
+        <div class="col-md-6 col-lg-4">
+            <div class="course-card p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge badge-soft">@course.IsoCode.ToUpperInvariant()</span>
+                    <span class="text-muted small">@lessons lessons</span>
+                </div>
+                <h2 class="h5 mt-2">@course.Title</h2>
+                <p class="text-muted small mb-3">@course.Description</p>
+                <a class="btn btn-sm btn-primary" href="courses/@course.Id">Open course</a>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Course> courses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await Db.Courses.AsNoTracking()
+            .Include(c => c.Chapters).ThenInclude(ch => ch.Lessons)
+            .OrderBy(c => c.Id)
+            .ToListAsync();
+    }
+}

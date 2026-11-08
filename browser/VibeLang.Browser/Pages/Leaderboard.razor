@@ -1,0 +1,26 @@
+@page "/leaderboard"
+@inject DemoSession Session
+
+<PageTitle>Leaderboard — VibeLang</PageTitle>
+
+<h1 class="h3 mb-1">Global leaderboard</h1>
+<p class="text-muted">Sample standings — the demo ships no user accounts.</p>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr><th>#</th><th>Learner</th><th class="text-end">XP</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td>@(Session.IsSignedIn ? Session.Name : "Demo Student")</td><td class="text-end">240</td></tr>
+                <tr><td>2</td><td>Ada</td><td class="text-end">180</td></tr>
+                <tr><td>3</td><td>Linus</td><td class="text-end">120</td></tr>
+                <tr><td>4</td><td>Grace</td><td class="text-end">60</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+}
