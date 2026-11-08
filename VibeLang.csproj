@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>6629836d-728e-40c7-af89-f15b976af568</UserSecretsId>
+    <DefaultItemExcludes>$(DefaultItemExcludes);browser/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,4 +23,11 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="browser/**" />
+    <Content Remove="browser/**" />
+    <None Remove="browser/**" />
+    <RazorComponent Remove="browser/**" />
+    <RazorGenerate Remove="browser/**" />
+  </ItemGroup>
 </Project>
