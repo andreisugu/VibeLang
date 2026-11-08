@@ -1,0 +1,119 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@inject BrowserAuthService Auth
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Create Account</PageTitle>
+
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <div class="auth-icon-wrapper"><span class="auth-icon">🚀</span></div>
+            <h1 class="auth-title">Join VibeLang</h1>
+            <p class="auth-subtitle">Start your language learning journey today</p>
+        </div>
+
+        <EditForm Model="model" OnValidSubmit="Submit">
+            @if (!string.IsNullOrWhiteSpace(error))
+            {
+                <div class="auth-error-summary" role="alert">@error</div>
+            }
+
+            <div class="auth-form-body">
+                <div class="auth-name-row">
+                    <div class="auth-field">
+                        <label class="auth-label">First Name</label>
+                        <div class="auth-input-wrapper">
+                            <span class="auth-input-icon">👤</span>
+                            <InputText @bind-Value="model.FirstName" id="firstName" class="auth-input" autocomplete="given-name" placeholder="Ana" />
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label class="auth-label">Last Name</label>
+                        <div class="auth-input-wrapper">
+                            <span class="auth-input-icon">👤</span>
+                            <InputText @bind-Value="model.LastName" id="lastName" class="auth-input" autocomplete="family-name" placeholder="Popescu" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-label">Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">✉️</span>
+                        <InputText @bind-Value="model.Email" id="email" class="auth-input" autocomplete="username" placeholder="ana.popescu@email.com" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-label">Password</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">🔒</span>
+                        <input @bind="model.Password" id="password" type="password" class="auth-input" autocomplete="new-password" placeholder="Minimum 6 characters" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-label">Confirm Password</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">🔒</span>
+                        <input @bind="model.ConfirmPassword" id="confirmPassword" type="password" class="auth-input" autocomplete="new-password" placeholder="Repeat your password" />
+                    </div>
+                </div>
+
+                <button id="registerSubmit" type="submit" class="auth-submit-btn">
+                    <span class="auth-btn-text">Create Account</span>
+                    <span class="auth-btn-icon">→</span>
+                </button>
+
+                <p class="text-muted small mt-3 mb-0">
+                    Demo: accounts and passwords are stored locally in this browser. No server, no email.
+                </p>
+            </div>
+        </EditForm>
+
+        <div class="auth-card-footer">
+            <p class="auth-footer-text">
+                Already have an account?
+                <a id="loginLink" href="login" class="auth-link">Sign in</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+
+    private RegisterModel model = new();
+    private string? error;
+
+    private async Task Submit()
+    {
+        error = null;
+        if (model.Password != model.ConfirmPassword)
+        {
+            error = "The password and confirmation password do not match.";
+            return;
+        }
+
+        var result = await Auth.RegisterAsync(model.Email, model.Password, model.FirstName, model.LastName);
+        if (result.Ok)
+        {
+            Nav.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "" : ReturnUrl!);
+        }
+        else
+        {
+            error = result.Error ?? "Registration failed.";
+        }
+    }
+
+    public sealed class RegisterModel
+    {
+        [Required] public string FirstName { get; set; } = "";
+        [Required] public string LastName { get; set; } = "";
+        [Required, EmailAddress] public string Email { get; set; } = "";
+        [Required, MinLength(6)] public string Password { get; set; } = "";
+        [Required] public string ConfirmPassword { get; set; } = "";
+    }
+}

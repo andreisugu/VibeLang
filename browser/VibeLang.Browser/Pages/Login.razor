@@ -1,6 +1,6 @@
 @page "/login"
 @using System.ComponentModel.DataAnnotations
-@inject DemoSession Session
+@inject BrowserAuthService Auth
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -9,14 +9,17 @@
 <div class="auth-page-wrapper">
     <div class="auth-card">
         <div class="auth-card-header">
-            <div class="auth-icon-wrapper">
-                <span class="auth-icon">🌟</span>
-            </div>
+            <div class="auth-icon-wrapper"><span class="auth-icon">🌟</span></div>
             <h1 class="auth-title">Welcome Back</h1>
             <p class="auth-subtitle">Sign in to continue learning</p>
         </div>
 
         <EditForm Model="model" OnValidSubmit="Submit">
+            @if (!string.IsNullOrWhiteSpace(error))
+            {
+                <div class="auth-error-summary" role="alert">@error</div>
+            }
+
             <div class="auth-form-body">
                 <div class="auth-field">
                     <label class="auth-label">Email Address</label>
@@ -29,13 +32,12 @@
                 <div class="auth-field">
                     <div class="auth-label-row">
                         <label class="auth-label">Password</label>
+                        <a id="forgotPasswordLink" href="forgot-password" class="auth-forgot-link">Forgot password?</a>
                     </div>
                     <div class="auth-input-wrapper">
                         <span class="auth-input-icon">🔒</span>
                         <input @bind="model.Password" id="password" type="password" class="auth-input" autocomplete="current-password" placeholder="Enter your password" />
-                        <button type="button" class="auth-toggle-password" @onclick="TogglePassword" aria-label="Show or hide password">
-                            <span>👁️</span>
-                        </button>
+                        <button type="button" class="auth-toggle-password" @onclick="TogglePassword" aria-label="Show or hide password"><span>👁️</span></button>
                     </div>
                 </div>
 
@@ -52,7 +54,8 @@
                 </button>
 
                 <p class="text-muted small mt-3 mb-0">
-                    Demo: any email and password sign you in locally. There is no server and no real account.
+                    Demo accounts: <code>student@vibelang.com / Student123</code> ·
+                    admin <code>admin@vibelang.com / Admin123</code>
                 </p>
             </div>
         </EditForm>
@@ -60,31 +63,37 @@
         <div class="auth-card-footer">
             <p class="auth-footer-text">
                 Don't have an account?
-                <a href="login" class="auth-link">Sign up for free</a>
+                <a id="registerLink" href="register" class="auth-link">Sign up for free</a>
             </p>
         </div>
     </div>
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+
     private LoginModel model = new();
+    private string? error;
 
     private async Task Submit()
     {
-        var name = model.Email.Split('@')[0];
-        await Session.SignInAsync(name);
-        Nav.NavigateTo("");
+        error = null;
+        if (await Auth.LoginAsync(model.Email, model.Password))
+        {
+            Nav.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "" : ReturnUrl!);
+        }
+        else
+        {
+            error = "Invalid email or password.";
+        }
     }
 
-    private async Task TogglePassword()
-    {
-        await JS.InvokeVoidAsync("vibelangTogglePassword", "password");
-    }
+    private async Task TogglePassword() => await JS.InvokeVoidAsync("vibelangTogglePassword", "password");
 
     public sealed class LoginModel
     {
-        [Required] public string Email { get; set; } = "learner@vibelang.com";
-        [Required] public string Password { get; set; } = "demo";
+        [Required, EmailAddress] public string Email { get; set; } = "student@vibelang.com";
+        [Required] public string Password { get; set; } = "Student123";
         public bool RememberMe { get; set; } = true;
     }
 }

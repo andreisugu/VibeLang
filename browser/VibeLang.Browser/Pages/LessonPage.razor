@@ -1,6 +1,10 @@
 @page "/lessons/{Id:int}"
-@inject BrowserDbContext Db
+@implements IDisposable
+@inject VibeLangDbContext Db
+@inject BrowserAuthService Auth
+@inject LessonResultService LessonResults
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 
 <PageTitle>Lesson: @(lesson?.Title ?? "Loading...")</PageTitle>
 
@@ -76,10 +80,17 @@
     private Lesson? lesson;
     private string? contentJson;
     private bool started;
+    private DotNetObjectReference<LessonPage>? selfRef;
 
     protected override async Task OnParametersSetAsync()
     {
-        started = false;
+        var user = await Auth.GetUserAsync();
+        if (user is null)
+        {
+            Nav.NavigateTo($"login?returnUrl=lessons/{Id}");
+            return;
+        }
+
         lesson = await Db.Lessons.AsNoTracking().FirstOrDefaultAsync(l => l.Id == Id);
         contentJson = lesson?.ContentJson?.Replace("\\'", "'");
     }
@@ -89,7 +100,21 @@
         if (!started && lesson is not null && !string.IsNullOrWhiteSpace(contentJson))
         {
             started = true;
+            selfRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("vibelangRegisterSubmit", selfRef);
             await JS.InvokeVoidAsync("vibelangStartLesson", contentJson, lesson.Id);
         }
+    }
+
+    [JSInvokable]
+    public async Task<object> SubmitLesson(int lessonId, int score)
+    {
+        var result = await LessonResults.SubmitAsync(lessonId, score);
+        return new { success = result.Ok, xpAdded = result.XpAdded, totalXP = result.TotalXp };
+    }
+
+    public void Dispose()
+    {
+        selfRef?.Dispose();
     }
 }

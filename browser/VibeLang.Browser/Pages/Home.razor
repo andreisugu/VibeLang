@@ -1,14 +1,15 @@
 @page "/"
-@inject BrowserDbContext Db
-@inject ProgressService Progress
-@inject DemoSession Session
+@inject VibeLangDbContext Db
+@inject BrowserAuthService Auth
+@inject IStatsService Stats
+@inject IAchievementService Achievements
 
 <PageTitle>Dashboard</PageTitle>
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h3 mb-0">🎯 Welcome back, @FirstName!</h1>
+            <h1 class="h3 mb-0">🎯 Welcome back, @firstName!</h1>
             <p class="text-muted small mt-2">Keep learning and earn more achievements!</p>
         </div>
         <div class="text-end">
@@ -24,7 +25,7 @@
             <div class="card stat-card shadow-sm bg-primary bg-opacity-10">
                 <div class="card-body text-center">
                     <div class="text-primary" style="font-size: 2rem;">⚡</div>
-                    <div class="stat-value text-primary">@progress.Xp</div>
+                    <div class="stat-value text-primary">@totalXp</div>
                     <div class="stat-label">Total XP</div>
                     <small class="text-muted">Keep grinding!</small>
                 </div>
@@ -32,21 +33,55 @@
         </div>
 
         <div class="col-md-3 col-sm-6">
-            <div class="card stat-card shadow-sm bg-warning bg-opacity-10">
-                <div class="card-body text-center">
-                    <div style="font-size: 2rem;">🔥</div>
-                    <div class="stat-value text-dark">0</div>
-                    <div class="stat-label">Day Streak</div>
-                    <small class="text-muted">Keep it up!</small>
+            @if (streakBrokenToday && currentStreak == 1)
+            {
+                <div class="card stat-card shadow-sm" style="border: 2px solid #dc3545;">
+                    <div class="card-body text-center bg-danger bg-opacity-10">
+                        <div style="font-size: 2rem;">⚠️</div>
+                        <div class="stat-value text-danger">@currentStreak</div>
+                        <div class="stat-label">Day Streak</div>
+                        <small class="text-danger fw-bold">Streak broken! Start fresh today!</small>
+                    </div>
                 </div>
-            </div>
+            }
+            else if (hoursRemaining < 6)
+            {
+                <div class="card stat-card shadow-sm" style="border: 2px solid #ffc107;">
+                    <div class="card-body text-center bg-warning bg-opacity-20">
+                        <div style="font-size: 2rem;">⏰</div>
+                        <div class="stat-value text-dark">@currentStreak</div>
+                        <div class="stat-label">Day Streak</div>
+                        <small class="text-dark"><strong>@hoursRemaining hours left!</strong> Complete a lesson!</small>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card stat-card shadow-sm bg-warning bg-opacity-10">
+                    <div class="card-body text-center">
+                        <div style="font-size: 2rem;">🔥</div>
+                        <div class="stat-value text-dark">@currentStreak</div>
+                        <div class="stat-label">Day Streak</div>
+                        <small class="text-muted">
+                            @if (maxStreak > 0)
+                            {
+                                <span>Best: @maxStreak days</span>
+                            }
+                            else
+                            {
+                                <span>Keep it up!</span>
+                            }
+                        </small>
+                    </div>
+                </div>
+            }
         </div>
 
         <div class="col-md-3 col-sm-6">
             <div class="card stat-card shadow-sm bg-success bg-opacity-10">
                 <div class="card-body text-center">
                     <div class="text-success" style="font-size: 2rem;">📚</div>
-                    <div class="stat-value text-success">@progress.Lessons.Count</div>
+                    <div class="stat-value text-success">@lessonsCompleted</div>
                     <div class="stat-label">Lessons Done</div>
                     <small class="text-muted">Great progress!</small>
                 </div>
@@ -67,17 +102,17 @@
 
     <div class="row g-3 mb-4">
         <div class="col-md-6">
-            @if (lastLesson is not null)
+            @if (continueLesson is not null)
             {
                 <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <div class="card-body text-white">
                         <div class="small text-white-50 mb-2">📍 CONTINUE LEARNING</div>
-                        <h5 class="mb-2 text-white">@lastLesson.Chapter?.Course?.Title</h5>
+                        <h5 class="mb-2 text-white">@continueLesson.Chapter?.Course?.Title</h5>
                         <p class="mb-3 small">
-                            <span class="text-white-50">@lastLesson.Chapter?.Title</span> →
-                            <span class="fw-bold">@lastLesson.Title</span>
+                            <span class="text-white-50">@continueLesson.Chapter?.Title</span> →
+                            <span class="fw-bold">@continueLesson.Title</span>
                         </p>
-                        <a href="lessons/@lastLesson.Id" class="btn btn-light btn-sm rounded-pill px-4">Start Now →</a>
+                        <a href="lessons/@lastLessonId" class="btn btn-light btn-sm rounded-pill px-4">Start Now →</a>
                     </div>
                 </div>
             }
@@ -98,7 +133,7 @@
                     <div class="small text-white-50 mb-2">🏆 ACHIEVEMENTS</div>
                     <h5 class="mb-2 text-white">@achievementCount of @totalAchievements Unlocked</h5>
                     <div class="progress bg-white-50" style="height: 6px;">
-                        <div class="progress-bar bg-white" role="progressbar" style="width: @((achievementCount * 100) / totalAchievements)%;"></div>
+                        <div class="progress-bar bg-white" role="progressbar" style="width: @((achievementCount * 100) / Math.Max(1, totalAchievements))%;"></div>
                     </div>
                 </div>
             </a>
@@ -124,46 +159,149 @@
             }
         </div>
     }
+
+    @if (recentActivity.Count > 0)
+    {
+        <div class="mt-4">
+            <h5 class="mb-3"><span style="font-size: 1.3rem;">⏱️</span> Recent Activity</h5>
+            @foreach (var activity in recentActivity)
+            {
+                <div class="alert alert-light border-start border-4" style="border-color: #667eea;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>@activity.LessonTitle</strong>
+                            <div class="small text-muted">@activity.ChapterTitle • @activity.CourseName</div>
+                            <div class="small text-muted">Score: <span class="text-success fw-bold">@activity.Score%</span></div>
+                        </div>
+                        <small class="text-muted">@activity.CompletionDate.ToString("MMM d")</small>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @code {
-    private ProgressState progress = new();
-    private Lesson? lastLesson;
-    private List<CourseProgress> courseProgress = new();
+    private ApplicationUser? user;
+    private UserCourseStats? stats;
+    private Lesson? continueLesson;
+    private int? lastLessonId;
+    private int lessonsCompleted;
+    private int level;
     private int achievementCount;
     private int totalAchievements = 6;
+    private int hoursRemaining = 24;
+    private int currentStreak;
+    private int maxStreak;
+    private bool streakBrokenToday;
+    private string firstName = "Student";
+    private List<CourseProgressRow> courseProgress = new();
+    private List<ActivityRow> recentActivity = new();
 
-    private string FirstName => Session.IsSignedIn ? Session.Name : "Learner";
-    private int level => 1 + (progress.Xp / 500);
-    private int levelXp => Math.Min((progress.Xp % 500) + 100, 500);
+    private int totalXp => stats?.TotalXP ?? 0;
+    private int levelXp => Math.Min((totalXp % 500) + 100, 500);
 
     protected override async Task OnInitializedAsync()
     {
-        progress = await Progress.GetAsync();
+        user = await Auth.GetUserAsync();
+        firstName = user?.FirstName ?? user?.UserName ?? "Student";
         totalAchievements = await Db.Achievements.CountAsync();
 
-        var courses = await Db.Courses.AsNoTracking()
-            .Include(c => c.Chapters).ThenInclude(ch => ch.Lessons)
-            .OrderBy(c => c.Id)
-            .ToListAsync();
+        if (user is null) return;
 
-        if (progress.LastLessonId is int id)
+        var lastProgress = await Db.UserLessonProgresses.AsNoTracking()
+            .Include(p => p.Lesson).ThenInclude(l => l.Chapter)
+            .Where(p => p.UserId == user.Id)
+            .OrderByDescending(p => p.CompletionDate)
+            .FirstOrDefaultAsync();
+
+        if (lastProgress?.Lesson?.Chapter is not null)
         {
-            lastLesson = await Db.Lessons.AsNoTracking()
-                .Include(l => l.Chapter).ThenInclude(ch => ch.Course)
-                .FirstOrDefaultAsync(l => l.Id == id);
+            var lesson = lastProgress.Lesson;
+            var chapter = lesson.Chapter;
+
+            if (lastProgress.ScoreAchieved >= 50)
+            {
+                var nextLesson = await Db.Lessons.AsNoTracking()
+                    .Where(l => l.ChapterId == lesson.ChapterId && l.Order > lesson.Order)
+                    .OrderBy(l => l.Order).FirstOrDefaultAsync();
+
+                if (nextLesson is not null)
+                {
+                    lastLessonId = nextLesson.Id;
+                }
+                else
+                {
+                    var nextChapter = await Db.Chapters.AsNoTracking()
+                        .Where(c => c.CourseId == chapter.CourseId && c.Order > chapter.Order)
+                        .OrderBy(c => c.Order).FirstOrDefaultAsync();
+
+                    if (nextChapter is not null)
+                    {
+                        var first = await Db.Lessons.AsNoTracking()
+                            .Where(l => l.ChapterId == nextChapter.Id).OrderBy(l => l.Order).FirstOrDefaultAsync();
+                        lastLessonId = first?.Id;
+                    }
+                }
+            }
+
+            lastLessonId ??= lesson.Id;
         }
 
-        var done = progress.Lessons.ToHashSet();
+        lastLessonId ??= (await Db.Lessons.AsNoTracking().OrderBy(l => l.Id).FirstOrDefaultAsync())?.Id;
+
+        if (lastLessonId is not null)
+        {
+            continueLesson = await Db.Lessons.AsNoTracking()
+                .Include(l => l.Chapter).ThenInclude(c => c.Course)
+                .FirstOrDefaultAsync(l => l.Id == lastLessonId);
+        }
+
+        stats = await Db.UserCourseStats.AsNoTracking()
+            .Where(s => s.UserId == user.Id).OrderByDescending(s => s.TotalXP).FirstOrDefaultAsync();
+
+        lessonsCompleted = await Db.UserLessonProgresses.CountAsync(p => p.UserId == user.Id && p.IsCompleted);
+        level = Math.Max(1, (totalXp / 500) + 1);
+        achievementCount = await Achievements.GetUserAchievementCountAsync(user.Id);
+
+        var completedIds = (await Db.UserLessonProgresses.AsNoTracking()
+            .Where(p => p.UserId == user.Id && p.IsCompleted)
+            .Select(p => p.LessonId).ToListAsync()).ToHashSet();
+
+        var courses = await Db.Courses.AsNoTracking()
+            .Include(c => c.Chapters).ThenInclude(ch => ch.Lessons).ToListAsync();
+
         courseProgress = courses.Select(c =>
         {
             var lessons = c.Chapters.SelectMany(ch => ch.Lessons).ToList();
-            return new CourseProgress(c.Title, lessons.Count(l => done.Contains(l.Id)), lessons.Count);
-        }).ToList();
+            return new CourseProgressRow(c.Title, lessons.Count(l => completedIds.Contains(l.Id)), lessons.Count);
+        }).Where(r => r.TotalLessons > 0).ToList();
+
+        recentActivity = (await Db.UserLessonProgresses.AsNoTracking()
+            .Where(p => p.UserId == user.Id && p.IsCompleted)
+            .Include(p => p.Lesson).ThenInclude(l => l.Chapter).ThenInclude(ch => ch.Course)
+            .OrderByDescending(p => p.CompletionDate).Take(5).ToListAsync())
+            .Select(p => new ActivityRow(
+                p.Lesson?.Title ?? "",
+                p.Lesson?.Chapter?.Title ?? "",
+                p.Lesson?.Chapter?.Course?.Title ?? "",
+                p.ScoreAchieved,
+                p.CompletionDate))
+            .ToList();
+
+        if (stats is not null)
+        {
+            hoursRemaining = Stats.GetHoursUntilStreakLoss(stats);
+            currentStreak = stats.CurrentStreak;
+            maxStreak = stats.MaxStreakEver;
+            streakBrokenToday = stats.StreakBrokenToday;
+        }
     }
 
-    private sealed record CourseProgress(string CourseName, int CompletedLessons, int TotalLessons)
+    private sealed record CourseProgressRow(string CourseName, int CompletedLessons, int TotalLessons)
     {
         public int Percent => TotalLessons > 0 ? (int)((double)CompletedLessons / TotalLessons * 100) : 0;
     }
+
+    private sealed record ActivityRow(string LessonTitle, string ChapterTitle, string CourseName, int Score, DateTime CompletionDate);
 }

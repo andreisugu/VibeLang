@@ -1,6 +1,7 @@
 @page "/leaderboard"
-@inject ProgressService Progress
-@inject DemoSession Session
+@inject IStatsService Stats
+@inject BrowserAuthService Auth
+@inject NavigationManager Nav
 
 <PageTitle>Leaderboard</PageTitle>
 
@@ -22,7 +23,8 @@
                 {
                     var rank = i + 1;
                     var row = rows[i];
-                    <tr class="@(row.Current ? "table-primary fw-bold" : "")">
+                    var isCurrent = Auth.User is not null && row.UserId == Auth.User.Id;
+                    <tr class="@(isCurrent ? "table-primary fw-bold" : "")">
                         <td class="px-4">
                             @if (rank <= 3)
                             {
@@ -33,9 +35,9 @@
                                 <span>@rank</span>
                             }
                         </td>
-                        <td>@row.Name</td>
-                        <td>@row.Course</td>
-                        <td class="text-end px-4">@row.Xp.ToString("N0")</td>
+                        <td>@(row.User?.FirstName ?? "Student")</td>
+                        <td>@(row.Course?.Title ?? "N/A")</td>
+                        <td class="text-end px-4">@row.TotalXP.ToString("N0")</td>
                     </tr>
                 }
                 @if (rows.Count == 0)
@@ -48,17 +50,17 @@
 </div>
 
 @code {
-    private List<Row> rows = new();
+    private List<UserCourseStats> rows = new();
 
     protected override async Task OnInitializedAsync()
     {
-        var progress = await Progress.GetAsync();
-        if (Session.IsSignedIn) rows.Add(new Row(Session.Name, "—", progress.Xp, true));
-        rows.Add(new Row("Ada", "English Basics", 180, false));
-        rows.Add(new Row("Linus", "English Basics", 120, false));
-        rows.Add(new Row("Grace", "English Basics", 60, false));
-        rows = rows.OrderByDescending(r => r.Xp).ToList();
-    }
+        var user = await Auth.GetUserAsync();
+        if (user is null)
+        {
+            Nav.NavigateTo("login?returnUrl=leaderboard");
+            return;
+        }
 
-    private sealed record Row(string Name, string Course, int Xp, bool Current);
+        rows = (await Stats.GetLeaderboardAsync()).ToList();
+    }
 }

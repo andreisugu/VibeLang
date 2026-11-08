@@ -1,8 +1,20 @@
 @page "/admin"
+@inject BrowserAuthService Auth
+@inject NavigationManager Nav
+
 <PageTitle>Admin Panel</PageTitle>
 
 <h1 class="h4">Admin Panel</h1>
-<div class="alert alert-info">
-    The admin panel is not part of the static browser demo. It needs the server-side MVC app and PostgreSQL.
-</div>
-<a href="" class="btn btn-primary rounded-pill px-4">Back to dashboard</a>
+
+@if (Auth.User is null)
+{
+    <div class="alert alert-info">Please <a href="login?returnUrl=admin">sign in</a> to access the admin panel.</div>
+}
+else
+{
+    <div class="alert alert-info">
+        The admin panel is not part of the demo-first build. It needs the server-side MVC app and a
+        shared PostgreSQL database; this browser copy is intentionally per-visitor.
+    </div>
+    <a href="" class="btn btn-primary rounded-pill px-4">Back to dashboard</a>
+}

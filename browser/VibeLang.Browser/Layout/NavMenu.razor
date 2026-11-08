@@ -1,14 +1,22 @@
 @implements IDisposable
-@inject DemoSession Session
+@inject BrowserAuthService Auth
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <ul class="navbar-nav align-items-center flex-row gap-2 mb-0">
-    @if (Session.IsSignedIn)
+    @if (Auth.IsSignedIn)
     {
         <li class="nav-item">
             <a class="nav-link d-flex align-items-center gap-2 text-dark" href="profile" title="My Profile">
-                <span class="avatar-initials rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold">@Initial</span>
-                <span class="d-none d-md-inline">@Session.Name</span>
+                @if (!string.IsNullOrEmpty(avatarUrl))
+                {
+                    <img src="@avatarUrl" alt="Profile" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;border:2px solid #FF9500;" />
+                }
+                else
+                {
+                    <span class="avatar-initials rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold">@Initial</span>
+                }
+                <span class="d-none d-md-inline">@DisplayName</span>
             </a>
         </li>
         <li class="nav-item">
@@ -17,23 +25,54 @@
     }
     else
     {
-        <li class="nav-item"><a class="nav-link text-dark" href="login">Register</a></li>
+        <li class="nav-item"><a class="nav-link text-dark" href="register">Register</a></li>
         <li class="nav-item"><a class="nav-link text-dark" href="login">Login</a></li>
     }
 </ul>
 
 @code {
-    private string Initial => Session.Name.Length > 0 ? Session.Name[0].ToString().ToUpperInvariant() : "?";
+    private string? avatarUrl;
 
-    protected override void OnInitialized() => Session.Changed += OnChanged;
+    private string DisplayName => Auth.User?.FirstName ?? Auth.User?.UserName ?? "Profile";
+    private string Initial => DisplayName.Length > 0 ? DisplayName[0].ToString().ToUpperInvariant() : "?";
 
-    private void OnChanged() => InvokeAsync(StateHasChanged);
+    protected override async Task OnInitializedAsync()
+    {
+        Auth.Changed += OnChanged;
+        await Auth.InitializeAsync();
+        await ResolveAvatarAsync();
+    }
+
+    private void OnChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await ResolveAvatarAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task ResolveAvatarAsync()
+    {
+        avatarUrl = null;
+        var path = Auth.User?.ProfilePicturePath;
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        if (path.StartsWith("idb:", StringComparison.Ordinal))
+        {
+            avatarUrl = await JS.InvokeAsync<string?>("vibelangImages.get", path.Substring(4));
+        }
+        else
+        {
+            avatarUrl = path;
+        }
+    }
 
     private async Task SignOut()
     {
-        await Session.SignOutAsync();
+        await Auth.LogoutAsync();
         Nav.NavigateTo("");
     }
 
-    public void Dispose() => Session.Changed -= OnChanged;
+    public void Dispose() => Auth.Changed -= OnChanged;
 }

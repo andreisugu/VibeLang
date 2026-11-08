@@ -1,5 +1,8 @@
 @page "/achievements"
-@inject BrowserDbContext Db
+@inject VibeLangDbContext Db
+@inject BrowserAuthService Auth
+@inject IAchievementService AchievementSvc
+@inject NavigationManager Nav
 
 <PageTitle>Achievements</PageTitle>
 
@@ -47,7 +50,7 @@
     <div class="row g-4 achievements-grid">
         @foreach (var achievement in achievements)
         {
-            var isEarned = earnedIds.Contains(achievement.Id);
+            var isEarned = earned.TryGetValue(achievement.Id, out var earnedDate);
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm border-0 @(isEarned ? "border-success" : "opacity-75")">
                     <div class="card-body text-center">
@@ -68,6 +71,7 @@
                         @if (isEarned)
                         {
                             <span class="badge bg-success mb-3">✓ Earned</span>
+                            <p class="text-muted small mb-0">Earned on @earnedDate.ToString("MMM dd, yyyy")</p>
                         }
                         else
                         {
@@ -88,15 +92,23 @@
 
 @code {
     private List<Achievement> achievements = new();
-    private HashSet<int> earnedIds = new();
+    private Dictionary<int, DateTime> earned = new();
 
-    private int totalEarned => earnedIds.Count;
+    private int totalEarned => earned.Count;
     private int totalAvailable => achievements.Count;
     private int percentage => totalAvailable > 0 ? totalEarned * 100 / totalAvailable : 0;
 
     protected override async Task OnInitializedAsync()
     {
+        var user = await Auth.GetUserAsync();
+        if (user is null)
+        {
+            Nav.NavigateTo("login?returnUrl=achievements");
+            return;
+        }
+
         achievements = await Db.Achievements.AsNoTracking().OrderBy(a => a.Id).ToListAsync();
+        earned = await AchievementSvc.GetUserAchievementsAsync(user.Id);
     }
 
     private static string Icon(string title) =>

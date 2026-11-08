@@ -13,17 +13,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.22" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.22" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="../../Models/Course.cs" Link="Models/Course.cs" />
-    <Compile Include="../../Models/Chapter.cs" Link="Models/Chapter.cs" />
-    <Compile Include="../../Models/Lesson.cs" Link="Models/Lesson.cs" />
-    <Compile Include="../../Models/VocabularyWord.cs" Link="Models/VocabularyWord.cs" />
-    <Compile Include="../../Models/Achievement.cs" Link="Models/Achievement.cs" />
-    <Compile Include="../../Models/Quiz.cs" Link="Models/Quiz.cs" />
-    <Compile Include="../../Models/QuizQuestion.cs" Link="Models/QuizQuestion.cs" />
-    <Compile Include="../../Models/QuizOption.cs" Link="Models/QuizOption.cs" />
+    <Compile Include="../../Models/*.cs" Link="Models/%(Filename)%(Extension)" />
+    <Compile Include="../../Repositories/*.cs" Link="Repositories/%(Filename)%(Extension)" />
+    <Compile Include="../../Services/*.cs" Exclude="../../Services/AuthService.cs;../../Services/IAuthService.cs" Link="Services/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

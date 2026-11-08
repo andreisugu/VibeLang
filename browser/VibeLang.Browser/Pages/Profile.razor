@@ -1,58 +1,207 @@
 @page "/profile"
-@inject DemoSession Session
-@inject ProgressService Progress
+@using Microsoft.AspNetCore.Identity
+@inject BrowserAuthService Auth
+@inject UserManager<ApplicationUser> UserManager
+@inject VibeLangDbContext Db
+@inject SnapshotService Snapshot
+@inject IJSRuntime JS
 @inject NavigationManager Nav
 
-<PageTitle>Profile</PageTitle>
+<PageTitle>My Profile</PageTitle>
 
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-4 text-center">
-                <span class="avatar-initials rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold" style="width:72px;height:72px;font-size:1.6rem;">@Initial</span>
-                <h1 class="h4 mt-3">@Session.Name</h1>
-                <p class="text-muted small">Demo profile — there are no uploads or account edits in the static build.</p>
+<div class="container py-4" style="max-width:860px;">
+    <h1 class="h4 mb-4 fw-bold">My Profile</h1>
 
-                <div class="row g-3 mt-2">
-                    <div class="col-6">
-                        <div class="p-3 bg-light rounded">
-                            <div class="h4 mb-0">@progress.Xp</div>
-                            <div class="small text-muted">Total XP</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-3 bg-light rounded">
-                            <div class="h4 mb-0">@progress.Lessons.Count</div>
-                            <div class="small text-muted">Lessons Done</div>
-                        </div>
-                    </div>
+    @if (!string.IsNullOrWhiteSpace(statusMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @statusMessage
+            <button type="button" class="btn-close" @onclick="() => statusMessage = null"></button>
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(pictureError))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @pictureError
+            <button type="button" class="btn-close" @onclick="() => pictureError = null"></button>
+        </div>
+    }
+
+    @if (user is null)
+    {
+        <p class="text-muted">Loading profile…</p>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 text-center p-4">
+                    @if (!string.IsNullOrEmpty(avatarUrl))
+                    {
+                        <img id="profile-avatar-img" src="@avatarUrl" alt="Profile picture" class="rounded-circle mx-auto mb-3" style="width:110px;height:110px;object-fit:cover;border:3px solid #FF9500;" />
+                    }
+                    else
+                    {
+                        <div id="profile-avatar-initials" class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center text-white fw-bold fs-2" style="width:110px;height:110px;background:linear-gradient(135deg,#FF9500,#FF5E00);">@Initials</div>
+                    }
+
+                    <div class="fw-bold fs-6">@(string.IsNullOrWhiteSpace(user.FullName) ? user.UserName : user.FullName)</div>
+                    <div class="text-muted small mb-3">@user.Email</div>
+
+                    <label for="profilePicture" class="btn btn-sm btn-outline-secondary w-100 mb-2" style="cursor:pointer;">📷 Change Photo</label>
+                    <InputFile id="profilePicture" class="d-none" OnChange="OnFileChange" accept="image/jpeg,image/png,image/gif,image/webp" />
+
+                    @if (!string.IsNullOrEmpty(user.ProfilePicturePath))
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-danger w-100" @onclick="RemovePicture">🗑️ Remove Photo</button>
+                    }
+
+                    <p class="text-muted" style="font-size:0.72rem;margin-top:0.5rem;">JPEG, PNG, GIF or WebP · Max 5 MB</p>
                 </div>
+            </div>
 
-                <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
-                    <a href="courses" class="btn btn-primary rounded-pill px-4">Continue learning</a>
-                    <button class="btn btn-outline-danger rounded-pill px-4" @onclick="ResetProgress">Reset progress</button>
-                    <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="SignOut">Sign out</button>
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">Personal Information</h5>
+                        <EditForm Model="this" OnValidSubmit="SaveProfile">
+                            <div class="mb-3">
+                                <label for="firstName" class="form-label fw-semibold">First Name</label>
+                                <input id="firstName" class="form-control" @bind="firstName" placeholder="First name" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="lastName" class="form-label fw-semibold">Last Name</label>
+                                <input id="lastName" class="form-control" @bind="lastName" placeholder="Last name" />
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Email Address</label>
+                                <input class="form-control bg-light" type="email" value="@user.Email" disabled />
+                                <div class="form-text">Email cannot be changed here.</div>
+                            </div>
+                            <button id="save-profile-btn" type="submit" class="btn btn-primary rounded-pill px-4">💾 Save Changes</button>
+                        </EditForm>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 </div>
 
 @code {
-    private ProgressState progress = new();
-    private string Initial => Session.Name.Length > 0 ? Session.Name[0].ToString().ToUpperInvariant() : "?";
+    private ApplicationUser? user;
+    private string? avatarUrl;
+    private string firstName = "";
+    private string lastName = "";
+    private string? statusMessage;
+    private string? pictureError;
 
-    protected override async Task OnInitializedAsync() => progress = await Progress.GetAsync();
-
-    private async Task ResetProgress()
+    private string Initials
     {
-        await Progress.ResetAsync();
-        progress = new ProgressState();
+        get
+        {
+            var name = !string.IsNullOrWhiteSpace(user?.FirstName) ? user!.FirstName : user?.UserName;
+            return string.IsNullOrWhiteSpace(name) ? "?" : name[0].ToString().ToUpperInvariant();
+        }
     }
 
-    private async Task SignOut()
+    protected override async Task OnInitializedAsync()
     {
-        await Session.SignOutAsync();
-        Nav.NavigateTo("");
+        user = await Auth.GetUserAsync();
+        if (user is null)
+        {
+            Nav.NavigateTo("login?returnUrl=profile");
+            return;
+        }
+
+        firstName = user.FirstName ?? "";
+        lastName = user.LastName ?? "";
+        await ResolveAvatarAsync();
+    }
+
+    private async Task ResolveAvatarAsync()
+    {
+        avatarUrl = null;
+        var path = user?.ProfilePicturePath;
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        if (path.StartsWith("idb:", StringComparison.Ordinal))
+        {
+            avatarUrl = await JS.InvokeAsync<string?>("vibelangImages.get", path.Substring(4));
+        }
+        else
+        {
+            avatarUrl = path;
+        }
+    }
+
+    private async Task SaveProfile()
+    {
+        if (user is null) return;
+
+        user.FirstName = firstName?.Trim();
+        user.LastName = lastName?.Trim();
+
+        var result = await UserManager.UpdateAsync(user);
+        await Snapshot.SaveAsync(Db);
+        Auth.NotifyChanged();
+        statusMessage = result.Succeeded ? "Profile updated successfully!" : "Error updating profile. Please try again.";
+    }
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        if (user is null) return;
+
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024)
+        {
+            pictureError = "File is too large. Maximum size is 5 MB.";
+            return;
+        }
+
+        var allowed = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+        if (!allowed.Contains(file.ContentType))
+        {
+            pictureError = "Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.";
+            return;
+        }
+
+        using var stream = file.OpenReadStream(5 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+
+        var dataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+        var id = Guid.NewGuid().ToString("N");
+        await JS.InvokeVoidAsync("vibelangImages.put", id, dataUrl);
+
+        if (user.ProfilePicturePath?.StartsWith("idb:", StringComparison.Ordinal) == true)
+        {
+            await JS.InvokeVoidAsync("vibelangImages.remove", user.ProfilePicturePath.Substring(4));
+        }
+
+        user.ProfilePicturePath = "idb:" + id;
+        await UserManager.UpdateAsync(user);
+        await Snapshot.SaveAsync(Db);
+        Auth.NotifyChanged();
+
+        avatarUrl = dataUrl;
+        statusMessage = "Profile picture updated successfully!";
+    }
+
+    private async Task RemovePicture()
+    {
+        if (user is null) return;
+
+        if (user.ProfilePicturePath?.StartsWith("idb:", StringComparison.Ordinal) == true)
+        {
+            await JS.InvokeVoidAsync("vibelangImages.remove", user.ProfilePicturePath.Substring(4));
+        }
+
+        user.ProfilePicturePath = null;
+        await UserManager.UpdateAsync(user);
+        await Snapshot.SaveAsync(Db);
+        Auth.NotifyChanged();
+
+        avatarUrl = null;
+        statusMessage = "Profile picture removed.";
     }
 }

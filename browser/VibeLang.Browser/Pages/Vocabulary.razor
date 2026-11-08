@@ -1,61 +1,79 @@
 @page "/vocabulary"
-@inject BrowserDbContext Db
-@inject ProgressService Progress
+@inject IVocabularyService Vocab
+@inject BrowserAuthService Auth
+@inject NavigationManager Nav
 
-<PageTitle>Mastered Vocabulary</PageTitle>
+<PageTitle>Vocabulary</PageTitle>
 
-<h1 class="h4">Mastered Vocabulary</h1>
-<p class="text-muted">Every word in the demo. Words from completed lessons are marked as learned.</p>
+<h1 class="h4">Vocabulary</h1>
 
-<div class="card shadow-sm border-0">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="bg-light">
-                <tr>
-                    <th class="px-4">Word</th>
-                    <th>Translation</th>
-                    <th>Example</th>
-                    <th>Lesson</th>
-                    <th class="text-end px-4">Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var word in words)
-                {
-                    var learned = completed.Contains(word.LessonId);
-                    <tr>
-                        <td class="px-4 fw-semibold">@word.Word</td>
-                        <td>@word.Translation</td>
-                        <td class="text-muted small">@word.ExampleSentence</td>
-                        <td class="small">@word.Lesson?.Title</td>
-                        <td class="text-end px-4">
-                            @if (learned)
-                            {
-                                <span class="badge bg-success">Learned</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">New</span>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+@if (loading)
+{
+    <p class="text-muted">Loading your vocabulary…</p>
+}
+else if (words.Count == 0)
+{
+    <div class="alert alert-info">
+        Complete some lessons to build your vocabulary! Your learned words will appear here.
     </div>
-</div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0"><div class="card-body">
+                <h2 class="text-primary display-6 mb-0">@stats.Total</h2><div class="text-muted small">Total Words</div>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0"><div class="card-body">
+                <h2 class="text-success display-6 mb-0">@stats.Learned</h2><div class="text-muted small">Learned</div>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0"><div class="card-body">
+                <h2 class="text-info display-6 mb-0">@stats.Mastered</h2><div class="text-muted small">Mastered</div>
+            </div></div>
+        </div>
+    </div>
+
+    <ul id="vocabulary-list" class="list-group">
+        @foreach (var word in words)
+        {
+            var status = progress.TryGetValue(word.Id, out var s) ? s : "New";
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>@word.Word</strong>
+                    <span class="text-muted ms-2">- @word.Translation</span>
+                    @if (!string.IsNullOrWhiteSpace(word.ExampleSentence))
+                    {
+                        <div class="small fst-italic text-muted">@word.ExampleSentence</div>
+                    }
+                </div>
+                <span class="badge @(status == "Learned" || status == "Mastered" ? "bg-success" : "bg-secondary")">@status</span>
+            </li>
+        }
+    </ul>
+}
 
 @code {
+    private bool loading = true;
     private List<VocabularyWord> words = new();
-    private HashSet<int> completed = new();
+    private Dictionary<int, string> progress = new();
+    private (int Total, int Learned, int Mastered) stats;
 
     protected override async Task OnInitializedAsync()
     {
-        var progress = await Progress.GetAsync();
-        completed = progress.Lessons.ToHashSet();
-        words = await Db.VocabularyWords.AsNoTracking()
-            .Include(w => w.Lesson)
-            .OrderBy(w => w.LessonId).ThenBy(w => w.Id)
-            .ToListAsync();
+        var user = await Auth.GetUserAsync();
+        if (user is null)
+        {
+            Nav.NavigateTo("login?returnUrl=vocabulary");
+            return;
+        }
+
+        words = (await Vocab.GetUserVocabularyAsync(user.Id)).ToList();
+        progress = await Vocab.GetUserVocabularyProgressAsync(user.Id);
+        stats = await Vocab.GetUserVocabularyStatsAsync(user.Id);
+        loading = false;
     }
 }

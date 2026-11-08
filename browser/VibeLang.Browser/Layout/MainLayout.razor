@@ -1,5 +1,5 @@
 @inherits LayoutComponentBase
-@inject DemoSession Session
+@inject BrowserAuthService Auth
 
 <div class="d-flex flex-column min-vh-100">
     <nav class="navbar navbar-light bg-light px-3">
@@ -28,6 +28,6 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await Session.RestoreAsync();
+        await Auth.InitializeAsync();
     }
 }

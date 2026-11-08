@@ -10,7 +10,7 @@ public static class ContentSeeder
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public static async Task SeedAsync(BrowserDbContext db, HttpClient http)
+    public static async Task SeedAsync(VibeLangDbContext db, HttpClient http)
     {
         var bundle = await http.GetFromJsonAsync<ContentBundle>("content.json", JsonOptions);
         if (bundle is null) return;

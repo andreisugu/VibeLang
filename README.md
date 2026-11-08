@@ -183,12 +183,24 @@ Port 5959 busy? `DEMO_PORT=9090 docker compose up --build`.
 
 🔗 **https://andreisugu.github.io/VibeLang/**
 
-A Blazor WebAssembly build of the app. The real `Models`, the real content
-DbContext and EF Core run in the visitor's tab against a SQLite database
-compiled to WebAssembly. The app's Bootstrap views, `styles.css`/`auth.css`
+A Blazor WebAssembly build of the app. The real `Models`, the real
+`VibeLangDbContext`, EF Core SQLite, ASP.NET Core Identity and the app's
+services run in the visitor's tab. The Bootstrap views, `styles.css`/`auth.css`
 and the actual `lesson-parser.js` (word bank, free text, matching and info
-questions) are ported; lesson completions and XP persist in localStorage.
-No API, no server, no accounts.
+questions) are ported; progress, streaks, XP, achievements, vocabulary and
+profiles are stored per browser. No API and no server: each visitor gets a
+private copy.
+
+Demo accounts:
+
+| Email | Password | Role |
+|---|---|---|
+| `student@vibelang.com` | `Student123` | User |
+| `admin@vibelang.com` | `Admin123` | Admin |
+
+Accounts, passwords (hashed by ASP.NET Core Identity), progress and profile
+pictures persist in the browser (localStorage + IndexedDB). Clearing site data
+resets the demo.
 
 ```bash
 dotnet workload install wasm-tools

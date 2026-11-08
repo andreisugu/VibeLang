@@ -371,11 +371,15 @@ class LessonParser {
             ? Math.min(100, Math.floor(50 + (streak / this.totalTestCount) * 50))
             : 100;
 
-        // Static demo: persist completion/XP in localStorage instead of POSTing.
+        // Submit to the real browser-side LessonResultService via Blazor interop.
         let xp = score;
-        if (window.vibelangProgress) {
-            const state = window.vibelangProgress.complete(this.lessonId, score);
-            xp = state.lastXpAdded ?? score;
+        if (window.__vibelangSubmitLesson) {
+            try {
+                const result = await window.__vibelangSubmitLesson(this.lessonId, score);
+                if (result && typeof result.xpAdded === 'number') xp = result.xpAdded;
+            } catch (e) {
+                console.error('Lesson submit failed:', e);
+            }
         }
 
         document.querySelector('.card:not(#results-view)').classList.add('d-none');
@@ -427,4 +431,12 @@ window.vibelangStartLesson = function (lessonData, lessonId) {
     window.__vibelangLesson = typeof lessonData === 'string' ? JSON.parse(lessonData) : lessonData;
     window.lessonId = lessonId;
     window.__vibelangParser = new LessonParser(lessonId);
+};
+
+// The lesson page hands its DotNetObjectReference to the parser.
+window.vibelangRegisterSubmit = function (ref) {
+    window.__vibelangSubmitRef = ref;
+    window.__vibelangSubmitLesson = function (lessonId, score) {
+        return window.__vibelangSubmitRef.invokeMethodAsync('SubmitLesson', lessonId, score);
+    };
 };
