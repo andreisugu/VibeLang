@@ -1,26 +1,64 @@
 @page "/leaderboard"
+@inject ProgressService Progress
 @inject DemoSession Session
 
-<PageTitle>Leaderboard — VibeLang</PageTitle>
+<PageTitle>Leaderboard</PageTitle>
 
-<h1 class="h3 mb-1">Global leaderboard</h1>
-<p class="text-muted">Sample standings — the demo ships no user accounts.</p>
+<h1 class="h4 mb-4">Global Leaderboard</h1>
 
-<div class="card">
+<div class="card shadow-sm border-0">
     <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
-            <thead>
-                <tr><th>#</th><th>Learner</th><th class="text-end">XP</th></tr>
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="px-4">Rank</th>
+                    <th>User</th>
+                    <th>Course</th>
+                    <th class="text-end px-4">XP Points</th>
+                </tr>
             </thead>
             <tbody>
-                <tr><td>1</td><td>@(Session.IsSignedIn ? Session.Name : "Demo Student")</td><td class="text-end">240</td></tr>
-                <tr><td>2</td><td>Ada</td><td class="text-end">180</td></tr>
-                <tr><td>3</td><td>Linus</td><td class="text-end">120</td></tr>
-                <tr><td>4</td><td>Grace</td><td class="text-end">60</td></tr>
+                @for (var i = 0; i < rows.Count; i++)
+                {
+                    var rank = i + 1;
+                    var row = rows[i];
+                    <tr class="@(row.Current ? "table-primary fw-bold" : "")">
+                        <td class="px-4">
+                            @if (rank <= 3)
+                            {
+                                <span class="badge rounded-pill @(rank == 1 ? "bg-warning text-dark" : rank == 2 ? "bg-secondary" : "bg-bronze")">@rank</span>
+                            }
+                            else
+                            {
+                                <span>@rank</span>
+                            }
+                        </td>
+                        <td>@row.Name</td>
+                        <td>@row.Course</td>
+                        <td class="text-end px-4">@row.Xp.ToString("N0")</td>
+                    </tr>
+                }
+                @if (rows.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No data available.</td></tr>
+                }
             </tbody>
         </table>
     </div>
 </div>
 
 @code {
+    private List<Row> rows = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var progress = await Progress.GetAsync();
+        if (Session.IsSignedIn) rows.Add(new Row(Session.Name, "—", progress.Xp, true));
+        rows.Add(new Row("Ada", "English Basics", 180, false));
+        rows.Add(new Row("Linus", "English Basics", 120, false));
+        rows.Add(new Row("Grace", "English Basics", 60, false));
+        rows = rows.OrderByDescending(r => r.Xp).ToList();
+    }
+
+    private sealed record Row(string Name, string Course, int Xp, bool Current);
 }

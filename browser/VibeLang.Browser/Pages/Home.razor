@@ -1,58 +1,169 @@
 @page "/"
 @inject BrowserDbContext Db
+@inject ProgressService Progress
+@inject DemoSession Session
 
-<PageTitle>VibeLang — learn a language</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-<section class="hero mb-4">
-    <div class="row align-items-center g-4">
-        <div class="col-lg-8">
-            <span class="badge bg-light text-dark mb-2">Browser demo · no server</span>
-            <h1 class="display-5 mb-3">Learn a language.<br />Keep the streak.</h1>
-            <p class="lead mb-4">
-                Courses, lessons, vocabulary and achievements — running entirely in this tab
-                with the real VibeLang data model and EF Core SQLite.
-            </p>
-            <a class="btn btn-light btn-lg" href="courses">Browse courses</a>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">🎯 Welcome back, @FirstName!</h1>
+            <p class="text-muted small mt-2">Keep learning and earn more achievements!</p>
         </div>
-        <div class="col-lg-4 text-center d-none d-lg-block">
-            <img src="assets/icons/vibelang_transparent_1024.png" alt="VibeLang" style="max-height:180px" />
+        <div class="text-end">
+            @if (achievementCount > 0)
+            {
+                <div class="streak-badge">🏆 @achievementCount Achievement@(achievementCount == 1 ? "" : "s") Unlocked</div>
+            }
         </div>
     </div>
-</section>
 
-<div class="d-flex justify-content-between align-items-end mb-3">
-    <div>
-        <h2 class="h4 mb-0">Courses</h2>
-        <div class="text-muted small">@courses.Count available</div>
-    </div>
-    <a href="courses" class="small">See all</a>
-</div>
-
-<div class="row g-3">
-    @foreach (var course in courses)
-    {
-        <div class="col-md-6 col-lg-4">
-            <div class="course-card p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="badge badge-soft">@course.IsoCode.ToUpperInvariant()</span>
-                    <span class="text-muted small">@course.Chapters.Count chapters</span>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card shadow-sm bg-primary bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="text-primary" style="font-size: 2rem;">⚡</div>
+                    <div class="stat-value text-primary">@progress.Xp</div>
+                    <div class="stat-label">Total XP</div>
+                    <small class="text-muted">Keep grinding!</small>
                 </div>
-                <h3 class="h5 mt-2">@course.Title</h3>
-                <p class="text-muted small mb-3">@course.Description</p>
-                <a class="btn btn-sm btn-primary" href="courses/@course.Id">Open course</a>
             </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card shadow-sm bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <div style="font-size: 2rem;">🔥</div>
+                    <div class="stat-value text-dark">0</div>
+                    <div class="stat-label">Day Streak</div>
+                    <small class="text-muted">Keep it up!</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card shadow-sm bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="text-success" style="font-size: 2rem;">📚</div>
+                    <div class="stat-value text-success">@progress.Lessons.Count</div>
+                    <div class="stat-label">Lessons Done</div>
+                    <small class="text-muted">Great progress!</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card shadow-sm bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <div class="text-info" style="font-size: 2rem;">🌟</div>
+                    <div class="stat-value text-info">@level</div>
+                    <div class="stat-label">Level</div>
+                    <small class="text-muted">@levelXp / 500 XP</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            @if (lastLesson is not null)
+            {
+                <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                        <div class="small text-white-50 mb-2">📍 CONTINUE LEARNING</div>
+                        <h5 class="mb-2 text-white">@lastLesson.Chapter?.Course?.Title</h5>
+                        <p class="mb-3 small">
+                            <span class="text-white-50">@lastLesson.Chapter?.Title</span> →
+                            <span class="fw-bold">@lastLesson.Title</span>
+                        </p>
+                        <a href="lessons/@lastLesson.Id" class="btn btn-light btn-sm rounded-pill px-4">Start Now →</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                        <div class="small text-white-50 mb-2">🚀 START LEARNING</div>
+                        <h5 class="mb-3 text-white">Begin Your Journey</h5>
+                        <a href="courses" class="btn btn-light btn-sm rounded-pill px-4">Explore Courses →</a>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-md-6">
+            <a href="achievements" class="card shadow-sm border-0 h-100 text-decoration-none" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); transition: all 0.2s;">
+                <div class="card-body text-white">
+                    <div class="small text-white-50 mb-2">🏆 ACHIEVEMENTS</div>
+                    <h5 class="mb-2 text-white">@achievementCount of @totalAchievements Unlocked</h5>
+                    <div class="progress bg-white-50" style="height: 6px;">
+                        <div class="progress-bar bg-white" role="progressbar" style="width: @((achievementCount * 100) / totalAchievements)%;"></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    @if (courseProgress.Count > 0)
+    {
+        <div class="progress-section">
+            <h5 class="mb-3"><span style="font-size: 1.3rem;">📊</span> Your Progress by Course</h5>
+            @foreach (var course in courseProgress)
+            {
+                <div class="course-progress-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">@course.CourseName</h6>
+                        <span class="badge bg-primary">@course.CompletedLessons/@course.TotalLessons</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: @course.Percent%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);"></div>
+                    </div>
+                    <small class="text-muted d-block mt-2">@course.Percent% Complete</small>
+                </div>
+            }
         </div>
     }
 </div>
 
 @code {
-    private List<Course> courses = new();
+    private ProgressState progress = new();
+    private Lesson? lastLesson;
+    private List<CourseProgress> courseProgress = new();
+    private int achievementCount;
+    private int totalAchievements = 6;
+
+    private string FirstName => Session.IsSignedIn ? Session.Name : "Learner";
+    private int level => 1 + (progress.Xp / 500);
+    private int levelXp => Math.Min((progress.Xp % 500) + 100, 500);
 
     protected override async Task OnInitializedAsync()
     {
-        courses = await Db.Courses.AsNoTracking()
-            .Include(c => c.Chapters)
+        progress = await Progress.GetAsync();
+        totalAchievements = await Db.Achievements.CountAsync();
+
+        var courses = await Db.Courses.AsNoTracking()
+            .Include(c => c.Chapters).ThenInclude(ch => ch.Lessons)
             .OrderBy(c => c.Id)
             .ToListAsync();
+
+        if (progress.LastLessonId is int id)
+        {
+            lastLesson = await Db.Lessons.AsNoTracking()
+                .Include(l => l.Chapter).ThenInclude(ch => ch.Course)
+                .FirstOrDefaultAsync(l => l.Id == id);
+        }
+
+        var done = progress.Lessons.ToHashSet();
+        courseProgress = courses.Select(c =>
+        {
+            var lessons = c.Chapters.SelectMany(ch => ch.Lessons).ToList();
+            return new CourseProgress(c.Title, lessons.Count(l => done.Contains(l.Id)), lessons.Count);
+        }).ToList();
+    }
+
+    private sealed record CourseProgress(string CourseName, int CompletedLessons, int TotalLessons)
+    {
+        public int Percent => TotalLessons > 0 ? (int)((double)CompletedLessons / TotalLessons * 100) : 0;
     }
 }

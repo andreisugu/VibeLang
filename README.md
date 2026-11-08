@@ -185,8 +185,10 @@ Port 5959 busy? `DEMO_PORT=9090 docker compose up --build`.
 
 A Blazor WebAssembly build of the app. The real `Models`, the real content
 DbContext and EF Core run in the visitor's tab against a SQLite database
-compiled to WebAssembly. No API, no server, no accounts — the demo ships only
-the course content and a local name for the leaderboard.
+compiled to WebAssembly. The app's Bootstrap views, `styles.css`/`auth.css`
+and the actual `lesson-parser.js` (word bank, free text, matching and info
+questions) are ported; lesson completions and XP persist in localStorage.
+No API, no server, no accounts.
 
 ```bash
 dotnet workload install wasm-tools

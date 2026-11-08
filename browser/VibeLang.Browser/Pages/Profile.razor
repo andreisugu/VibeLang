@@ -1,0 +1,58 @@
+@page "/profile"
+@inject DemoSession Session
+@inject ProgressService Progress
+@inject NavigationManager Nav
+
+<PageTitle>Profile</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 text-center">
+                <span class="avatar-initials rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold" style="width:72px;height:72px;font-size:1.6rem;">@Initial</span>
+                <h1 class="h4 mt-3">@Session.Name</h1>
+                <p class="text-muted small">Demo profile — there are no uploads or account edits in the static build.</p>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="h4 mb-0">@progress.Xp</div>
+                            <div class="small text-muted">Total XP</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="h4 mb-0">@progress.Lessons.Count</div>
+                            <div class="small text-muted">Lessons Done</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-center mt-4 flex-wrap">
+                    <a href="courses" class="btn btn-primary rounded-pill px-4">Continue learning</a>
+                    <button class="btn btn-outline-danger rounded-pill px-4" @onclick="ResetProgress">Reset progress</button>
+                    <button class="btn btn-outline-secondary rounded-pill px-4" @onclick="SignOut">Sign out</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ProgressState progress = new();
+    private string Initial => Session.Name.Length > 0 ? Session.Name[0].ToString().ToUpperInvariant() : "?";
+
+    protected override async Task OnInitializedAsync() => progress = await Progress.GetAsync();
+
+    private async Task ResetProgress()
+    {
+        await Progress.ResetAsync();
+        progress = new ProgressState();
+    }
+
+    private async Task SignOut()
+    {
+        await Session.SignOutAsync();
+        Nav.NavigateTo("");
+    }
+}

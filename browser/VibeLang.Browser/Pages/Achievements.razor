@@ -1,31 +1,109 @@
 @page "/achievements"
 @inject BrowserDbContext Db
 
-<PageTitle>Achievements — VibeLang</PageTitle>
+<PageTitle>Achievements</PageTitle>
 
-<h1 class="h3 mb-1">Achievements</h1>
-<p class="text-muted">Six badges from the real VibeLang database.</p>
+<div class="container py-5">
+    <h1 class="mb-2">Achievements</h1>
 
-<div class="row g-3">
-    @foreach (var achievement in achievements)
-    {
-        <div class="col-md-6">
-            <div class="course-card p-3 d-flex gap-3">
-                <div class="achievement-icon">★</div>
-                <div>
-                    <h2 class="h6 mb-1">@achievement.Title</h2>
-                    <p class="text-muted small mb-0">@achievement.Description</p>
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="text-primary display-4">@totalEarned</h2>
+                    <p class="text-muted mb-0">Achievements Earned</p>
                 </div>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="text-info display-4">@totalAvailable</h2>
+                    <p class="text-muted mb-0">Total Available</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="text-success display-4">@percentage%</h2>
+                    <p class="text-muted mb-0">Completion</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="fw-bold">Achievement Progress</span>
+            <span class="text-muted">@totalEarned / @totalAvailable</span>
+        </div>
+        <div class="progress" style="height: 25px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: @percentage%;" aria-valuenow="@totalEarned" aria-valuemin="0" aria-valuemax="@totalAvailable">@percentage%</div>
+        </div>
+    </div>
+
+    <h3 class="mb-4">All Achievements</h3>
+    <div class="row g-4 achievements-grid">
+        @foreach (var achievement in achievements)
+        {
+            var isEarned = earnedIds.Contains(achievement.Id);
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 @(isEarned ? "border-success" : "opacity-75")">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            @if (isEarned)
+                            {
+                                <div class="display-1">@Icon(achievement.Title)</div>
+                            }
+                            else
+                            {
+                                <div class="display-1 text-muted">🔒</div>
+                            }
+                        </div>
+
+                        <h5 class="card-title fw-bold">@achievement.Title</h5>
+                        <p class="card-text text-muted small">@achievement.Description</p>
+
+                        @if (isEarned)
+                        {
+                            <span class="badge bg-success mb-3">✓ Earned</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary mb-3">Locked</span>
+                            <p class="text-muted small mb-0">Complete more lessons to unlock</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (achievements.Count == 0)
+    {
+        <div class="alert alert-info text-center" role="alert">No achievements available yet. Check back soon!</div>
     }
 </div>
 
 @code {
     private List<Achievement> achievements = new();
+    private HashSet<int> earnedIds = new();
+
+    private int totalEarned => earnedIds.Count;
+    private int totalAvailable => achievements.Count;
+    private int percentage => totalAvailable > 0 ? totalEarned * 100 / totalAvailable : 0;
 
     protected override async Task OnInitializedAsync()
     {
         achievements = await Db.Achievements.AsNoTracking().OrderBy(a => a.Id).ToListAsync();
     }
+
+    private static string Icon(string title) =>
+        title.Contains("Beginner") ? "🎯" :
+        title.Contains("Expert") ? "⭐" :
+        title.Contains("Speed") ? "⚡" :
+        title.Contains("Perfect") ? "💯" :
+        title.Contains("Marathon") ? "🏃" :
+        title.Contains("Social") ? "👥" : "🏆";
 }

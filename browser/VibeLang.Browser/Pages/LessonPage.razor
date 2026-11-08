@@ -1,113 +1,95 @@
 @page "/lessons/{Id:int}"
 @inject BrowserDbContext Db
+@inject IJSRuntime JS
 
-<PageTitle>Lesson — VibeLang</PageTitle>
+<PageTitle>Lesson: @(lesson?.Title ?? "Loading...")</PageTitle>
 
-@if (lesson is null)
-{
-    <p class="text-muted">Loading lesson…</p>
-}
-else
-{
-    <a href="courses/@lesson.Chapter?.CourseId" class="small">← Back to course</a>
-    <h1 class="h3 mt-2">@lesson.Title</h1>
-    <div class="text-muted mb-4">@lesson.Chapter?.Title · @lesson.Difficulty</div>
+<div class="container py-4">
+    <div id="quiz-container" class="mx-auto" style="max-width: 700px;">
+        @if (lesson is null)
+        {
+            <div class="alert alert-info">No lesson found.</div>
+        }
+        else if (string.IsNullOrWhiteSpace(contentJson))
+        {
+            <div class="alert alert-info">This lesson has no interactive content yet.</div>
+            <a href="courses" class="btn btn-primary rounded-pill px-5">Back to Courses</a>
+        }
+        else
+        {
+            <div class="progress mb-4" style="height: 10px;">
+                <div id="quiz-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%;"></div>
+            </div>
 
-    <div class="row g-4">
-        <div class="col-lg-5">
-            <h2 class="h5">Vocabulary</h2>
-            @if (lesson.VocabularyWords.Count == 0)
-            {
-                <p class="text-muted">No vocabulary in this lesson.</p>
-            }
-            @foreach (var word in lesson.VocabularyWords.OrderBy(w => w.Id))
-            {
-                <div class="vocab p-3 mb-2">
-                    <div class="fw-semibold">@word.Word</div>
-                    <div class="text-muted">@word.Translation</div>
-                    @if (!string.IsNullOrWhiteSpace(word.ExampleSentence))
-                    {
-                        <div class="small fst-italic mt-1">@word.ExampleSentence</div>
-                    }
+            <div class="card shadow-sm border-0 overflow-hidden">
+                <div class="card-body p-4 p-md-5">
+                    <div id="question-header" class="mb-4">
+                        <h2 id="question-text" class="h4 fw-bold">Loading question...</h2>
+                        <div id="question-hint" class="text-muted small"></div>
+                    </div>
+
+                    <div id="question-content" class="mb-4"></div>
+
+                    <div id="feedback-area" class="mb-4 d-none">
+                        <div id="feedback-message" class="alert p-3 mb-0"></div>
+                    </div>
+
+                    <div id="quiz-controls" class="d-flex gap-2">
+                        <button id="btn-check" class="btn btn-primary rounded-pill px-5 py-2 fw-bold">Check</button>
+                        <button id="btn-next" class="btn btn-success rounded-pill px-5 py-2 fw-bold d-none">Continue</button>
+                        <button id="btn-skip" class="btn btn-outline-secondary rounded-pill px-4 py-2 d-none">Skip</button>
+                    </div>
                 </div>
-            }
-        </div>
+            </div>
 
-        <div class="col-lg-7">
-            <h2 class="h5">Practice</h2>
-            @if (content?.teste is null || content.teste.Count == 0)
-            {
-                <p class="text-muted">No practice items in this lesson.</p>
-            }
-            else
-            {
-                @for (var i = 0; i < content.teste.Count; i++)
-                {
-                    var index = i;
-                    var test = content.teste[i];
-                    <div class="card mb-2">
-                        <div class="card-body">
-                            <div class="fw-semibold">@test.propozitie</div>
-                            @if (string.IsNullOrWhiteSpace(test.raspunsCorect))
-                            {
-                                <div class="text-muted small mt-2">No answer stored for this item in the demo data.</div>
-                            }
-                            else if (revealed.Contains(index))
-                            {
-                                <div class="answer p-2 mt-2">@test.raspunsCorect</div>
-                            }
-                            else
-                            {
-                                <button class="btn btn-sm btn-outline-primary mt-2" @onclick="() => revealed.Add(index)">Show answer</button>
-                            }
+            <div id="results-view" class="card shadow-sm border-0 d-none">
+                <div class="card-body p-5 text-center">
+                    <div class="display-1 text-success mb-3"><i class="bi bi-trophy-fill"></i></div>
+                    <h2 class="fw-bold mb-3">Lesson Complete!</h2>
+                    <p class="text-muted mb-4">You've finished this lesson. Here's how you did:</p>
+
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-6 col-md-4">
+                            <div class="p-3 bg-light rounded shadow-sm">
+                                <div class="h3 mb-0 fw-bold text-primary" id="final-score">0</div>
+                                <div class="small text-muted">Total Score</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="p-3 bg-light rounded shadow-sm">
+                                <div class="h3 mb-0 fw-bold text-success" id="xp-earned">+0</div>
+                                <div class="small text-muted">XP Earned</div>
+                            </div>
                         </div>
                     </div>
-                }
-            }
-        </div>
+
+                    <a href="courses" class="btn btn-primary rounded-pill px-5">Back to Courses</a>
+                </div>
+            </div>
+        }
     </div>
-}
+</div>
 
 @code {
     [Parameter] public int Id { get; set; }
 
     private Lesson? lesson;
-    private LessonContent? content;
-    private readonly HashSet<int> revealed = new();
+    private string? contentJson;
+    private bool started;
 
     protected override async Task OnParametersSetAsync()
     {
-        lesson = await Db.Lessons.AsNoTracking()
-            .Include(l => l.VocabularyWords)
-            .Include(l => l.Chapter)
-            .FirstOrDefaultAsync(l => l.Id == Id);
+        started = false;
+        lesson = await Db.Lessons.AsNoTracking().FirstOrDefaultAsync(l => l.Id == Id);
+        contentJson = lesson?.ContentJson?.Replace("\\'", "'");
+    }
 
-        if (!string.IsNullOrWhiteSpace(lesson?.ContentJson))
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!started && lesson is not null && !string.IsNullOrWhiteSpace(contentJson))
         {
-            try
-            {
-                var raw = lesson.ContentJson.Replace("\\'", "'");
-                content = JsonSerializer.Deserialize<LessonContent>(raw, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            }
-            catch
-            {
-                content = null;
-            }
+            started = true;
+            await JS.InvokeVoidAsync("vibelangStartLesson", contentJson, lesson.Id);
         }
-    }
-
-    public sealed class LessonContent
-    {
-        public string? numeLectie { get; set; }
-        public string? dificultate { get; set; }
-        public List<JsonElement>? cuvinteInvatate { get; set; }
-        public List<TestItem>? teste { get; set; }
-    }
-
-    public sealed class TestItem
-    {
-        public int tip { get; set; }
-        public string? propozitie { get; set; }
-        public string? raspunsCorect { get; set; }
     }
 }

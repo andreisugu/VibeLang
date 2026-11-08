@@ -2,32 +2,38 @@
 @inject DemoSession Session
 @inject NavigationManager Nav
 
-<nav class="ms-auto d-flex align-items-center gap-1 gap-md-3">
-    <a class="nav-link" href="courses">Courses</a>
-    <a class="nav-link" href="achievements">Achievements</a>
-    <a class="nav-link" href="leaderboard">Leaderboard</a>
-
+<ul class="navbar-nav align-items-center flex-row gap-2 mb-0">
     @if (Session.IsSignedIn)
     {
-        <span class="badge badge-soft ms-2">@Session.Name</span>
-        <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="SignOut">Sign out</button>
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-2 text-dark" href="profile" title="My Profile">
+                <span class="avatar-initials rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold">@Initial</span>
+                <span class="d-none d-md-inline">@Session.Name</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link btn btn-link text-dark border-0" @onclick="SignOut">Logout</button>
+        </li>
     }
     else
     {
-        <a class="btn btn-sm btn-primary ms-2" href="login">Sign in</a>
+        <li class="nav-item"><a class="nav-link text-dark" href="login">Register</a></li>
+        <li class="nav-item"><a class="nav-link text-dark" href="login">Login</a></li>
     }
-</nav>
+</ul>
 
 @code {
-    protected override void OnInitialized() => Session.Changed += OnSessionChanged;
+    private string Initial => Session.Name.Length > 0 ? Session.Name[0].ToString().ToUpperInvariant() : "?";
 
-    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+    protected override void OnInitialized() => Session.Changed += OnChanged;
 
-    private void SignOut()
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task SignOut()
     {
-        Session.SignOut();
+        await Session.SignOutAsync();
         Nav.NavigateTo("");
     }
 
-    public void Dispose() => Session.Changed -= OnSessionChanged;
+    public void Dispose() => Session.Changed -= OnChanged;
 }

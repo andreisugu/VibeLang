@@ -1,27 +1,67 @@
 @page "/login"
+@using System.ComponentModel.DataAnnotations
 @inject DemoSession Session
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
-<PageTitle>Sign in — VibeLang demo</PageTitle>
+<PageTitle>Sign In</PageTitle>
 
-<div class="row justify-content-center">
-    <div class="col-md-7 col-lg-5">
-        <div class="card">
-            <div class="card-body p-4">
-                <h1 class="h4 mb-1">Sign in</h1>
-                <p class="text-muted small">
-                    This is a browser demo. There is no server and no real authentication;
-                    the name is kept in this tab only.
-                </p>
-
-                <EditForm Model="model" OnValidSubmit="Submit">
-                    <div class="mb-3">
-                        <label class="form-label">Your name</label>
-                        <InputText @bind-Value="model.Name" class="form-control" />
-                    </div>
-                    <button class="btn btn-primary w-100" type="submit">Continue</button>
-                </EditForm>
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <div class="auth-icon-wrapper">
+                <span class="auth-icon">🌟</span>
             </div>
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Sign in to continue learning</p>
+        </div>
+
+        <EditForm Model="model" OnValidSubmit="Submit">
+            <div class="auth-form-body">
+                <div class="auth-field">
+                    <label class="auth-label">Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">✉️</span>
+                        <InputText @bind-Value="model.Email" id="email" class="auth-input" autocomplete="username" placeholder="your@email.com" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <div class="auth-label-row">
+                        <label class="auth-label">Password</label>
+                    </div>
+                    <div class="auth-input-wrapper">
+                        <span class="auth-input-icon">🔒</span>
+                        <input @bind="model.Password" id="password" type="password" class="auth-input" autocomplete="current-password" placeholder="Enter your password" />
+                        <button type="button" class="auth-toggle-password" @onclick="TogglePassword" aria-label="Show or hide password">
+                            <span>👁️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="auth-remember-row">
+                    <label class="auth-checkbox-label">
+                        <InputCheckbox @bind-Value="model.RememberMe" class="auth-checkbox" />
+                        <span class="auth-checkbox-text">Remember me on this device</span>
+                    </label>
+                </div>
+
+                <button id="loginSubmit" type="submit" class="auth-submit-btn">
+                    <span class="auth-btn-text">Sign In</span>
+                    <span class="auth-btn-icon">→</span>
+                </button>
+
+                <p class="text-muted small mt-3 mb-0">
+                    Demo: any email and password sign you in locally. There is no server and no real account.
+                </p>
+            </div>
+        </EditForm>
+
+        <div class="auth-card-footer">
+            <p class="auth-footer-text">
+                Don't have an account?
+                <a href="login" class="auth-link">Sign up for free</a>
+            </p>
         </div>
     </div>
 </div>
@@ -29,14 +69,22 @@
 @code {
     private LoginModel model = new();
 
-    private void Submit()
+    private async Task Submit()
     {
-        Session.SignIn(model.Name);
+        var name = model.Email.Split('@')[0];
+        await Session.SignInAsync(name);
         Nav.NavigateTo("");
+    }
+
+    private async Task TogglePassword()
+    {
+        await JS.InvokeVoidAsync("vibelangTogglePassword", "password");
     }
 
     public sealed class LoginModel
     {
-        public string Name { get; set; } = "Demo Student";
+        [Required] public string Email { get; set; } = "learner@vibelang.com";
+        [Required] public string Password { get; set; } = "demo";
+        public bool RememberMe { get; set; } = true;
     }
 }
