@@ -154,6 +154,31 @@ VibeLang/
 
 ---
 
+## 🐳 Run the full demo (one command)
+
+`Dockerfile` and `compose.yaml` bring up PostgreSQL and the ASP.NET Core app together:
+
+```bash
+docker compose up --build
+```
+
+Open **http://localhost:5959**. The database is created from
+`demo/vibelang-demo.sql`, which contains the course content only — no real
+accounts, e-mails or password hashes. The app seeds its own demo admin on
+first start:
+
+| Field | Value |
+|---|---|
+| Email | `admin@vibelang.com` |
+| Password | `Admin123` |
+
+Port 5959 busy? `DEMO_PORT=9090 docker compose up --build`.
+
+> The dump is content-only on purpose. The live database also contains user
+> accounts and per-user progress; neither is published.
+
+---
+
 ## ⚙️ Running Locally
 
 ### Prerequisites

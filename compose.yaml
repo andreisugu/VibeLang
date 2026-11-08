@@ -1,0 +1,58 @@
+name: vibelang-demo
+
+# Self-contained VibeLang demo: PostgreSQL + the ASP.NET Core MVC app.
+# The database is seeded from demo/vibelang-demo.sql (content only; the app
+# creates its own demo admin and roles on first start).
+#
+#   docker compose up --build      (or: sudo podman compose up --build)
+#   open http://localhost:5959
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: vibelang
+      POSTGRES_USER: vibelang
+      POSTGRES_PASSWORD: vibelang
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - max_connections=20
+      - -c
+      - jit=off
+    volumes:
+      - vibelang-pgdata:/var/lib/postgresql/data
+      - ./demo/vibelang-demo.sql:/docker-entrypoint-initdb.d/01-vibelang-demo.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vibelang -d vibelang"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    build: .
+    image: vibelang-demo:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=vibelang;Username=vibelang;Password=vibelang"
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "${DEMO_PORT:-5959}:8080"
+    volumes:
+      - vibelang-uploads:/app/wwwroot/uploads
+      - vibelang-keys:/home/app/.aspnet/DataProtection-Keys
+    restart: unless-stopped
+
+volumes:
+  vibelang-pgdata:
+  vibelang-uploads:
+  vibelang-keys:
